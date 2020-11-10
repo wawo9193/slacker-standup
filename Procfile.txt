@@ -1,1 +1,1 @@
-mvn exec:java -Dexec.mainClass=Server
+web: java -jar target/SlackAPITest-1.0-SNAPSHOT.jar
