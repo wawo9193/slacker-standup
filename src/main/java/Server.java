@@ -16,7 +16,8 @@ import java.nio.charset.StandardCharsets;
 
 public class Server {
     public static void main(String[] args) throws Exception {
-        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
+        int PORT = Integer.valueOf(System.getenv("PORT"));
+        HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
         server.createContext("/command", new CommandHandler());
         server.createContext("/oauth", new OauthHandler());
 
