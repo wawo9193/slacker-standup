@@ -23,7 +23,7 @@ public class Server {
         var config = new AppConfig();
         config.setSingleTeamBotToken(System.getenv("SLACK_BOT_TOKEN"));
         config.setSigningSecret(System.getenv("SLACK_SIGNING_SECRET"));
-        System.out.println("*********Hi");
+        System.out.println("!*********Hi");
         server.setExecutor(null); // creates a default executor
         server.start();
     }
@@ -31,6 +31,7 @@ public class Server {
     static class CommandHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
+            System.out.println("HELLO!!!!");
             String response = "Server is working!";
             t.sendResponseHeaders(200, response.length());
             OutputStream os = t.getResponseBody();
@@ -49,47 +50,47 @@ public class Server {
 
         @Override
         public void handle(HttpExchange t) throws IOException {
-            System.out.println(t.getResponseCode());
+//            System.out.println(t.getResponseCode());
 
             // parse request body to get code
-            try (InputStream fis = t.getRequestBody();
-                 InputStreamReader isr = new InputStreamReader(fis,
-                         StandardCharsets.UTF_8);
-                 BufferedReader br = new BufferedReader(isr)) {
-
-                br.lines().forEach(line -> System.out.println("*" + line + "*"));
-            }
-
-            if (t.getResponseCode() == -1) {
-                String response = "Error, no code received.";
-                t.sendResponseHeaders(500, response.length());
-                OutputStream os = t.getResponseBody();
-                os.write(response.getBytes());
-                os.close();
-            } else {
-                try {
-                    // create get request to Slack
-                    HttpClient client = HttpClient.newHttpClient();
-                    HttpRequest request = HttpRequest.newBuilder()
-                            .uri(URI.create(createUrl(t.getResponseCode())))
-                            .build();
-
-                    // get response
-                    HttpResponse<String> response = null;
-                    response = client.send(request, HttpResponse.BodyHandlers.ofString());
-                    String res_body = response.body();
-                    System.out.println(response.body());
-
-                    // send response back in exchange
-                    t.sendResponseHeaders(200, res_body.length());
-                    OutputStream os = t.getResponseBody();
-                    os.write(res_body.getBytes());
-                    os.close();
-
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+//            try (InputStream fis = t.getRequestBody();
+//                 InputStreamReader isr = new InputStreamReader(fis,
+//                         StandardCharsets.UTF_8);
+//                 BufferedReader br = new BufferedReader(isr)) {
+//
+//                br.lines().forEach(line -> System.out.println("*" + line + "*"));
+//            }
+//
+//            if (t.getResponseCode() == -1) {
+//                String response = "Error, no code received.";
+//                t.sendResponseHeaders(500, response.length());
+//                OutputStream os = t.getResponseBody();
+//                os.write(response.getBytes());
+//                os.close();
+//            } else {
+//                try {
+//                    // create get request to Slack
+//                    HttpClient client = HttpClient.newHttpClient();
+//                    HttpRequest request = HttpRequest.newBuilder()
+//                            .uri(URI.create(createUrl(t.getResponseCode())))
+//                            .build();
+//
+//                    // get response
+//                    HttpResponse<String> response = null;
+//                    response = client.send(request, HttpResponse.BodyHandlers.ofString());
+//                    String res_body = response.body();
+//                    System.out.println(response.body());
+//
+//                    // send response back in exchange
+//                    t.sendResponseHeaders(200, res_body.length());
+//                    OutputStream os = t.getResponseBody();
+//                    os.write(res_body.getBytes());
+//                    os.close();
+//
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
         }
     }
 }
