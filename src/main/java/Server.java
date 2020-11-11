@@ -29,7 +29,7 @@ public class Server {
         var config = new AppConfig();
         config.setSingleTeamBotToken(System.getenv("SLACK_BOT_TOKEN"));
         config.setSigningSecret(System.getenv("SLACK_SIGNING_SECRET"));
-        System.out.println("!*********Hi");
+        System.out.println("!*********Hilkajsdkflj");
 //        private String SLACK_BOT_TOKEN="xoxb-1342824380833-1491088995860-uXD4xZf5sdWeopPZI6qHaJDP";
 //        private String SLACK_SIGNING_SECRET="c4bc66b49a798ffc1a0d90d2f4a55a86";
         app = new App();
