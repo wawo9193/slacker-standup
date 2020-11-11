@@ -18,6 +18,8 @@ import java.nio.charset.StandardCharsets;
 import com.slack.api.webhook.WebhookResponse;
 
 public class Server {
+    private static App app;
+
     public static void main(String[] args) throws Exception {
         int PORT = Integer.valueOf(System.getenv("PORT"));
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
@@ -28,6 +30,15 @@ public class Server {
         config.setSingleTeamBotToken(System.getenv("SLACK_BOT_TOKEN"));
         config.setSigningSecret(System.getenv("SLACK_SIGNING_SECRET"));
         System.out.println("!*********Hi");
+//        private String SLACK_BOT_TOKEN="xoxb-1342824380833-1491088995860-uXD4xZf5sdWeopPZI6qHaJDP";
+//        private String SLACK_SIGNING_SECRET="c4bc66b49a798ffc1a0d90d2f4a55a86";
+        app = new App();
+        SlackAppServer boltServer = new SlackAppServer(app);
+        try {
+            boltServer.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         server.setExecutor(null); // creates a default executor
         server.start();
     }
@@ -41,18 +52,9 @@ public class Server {
 //            OutputStream os = t.getResponseBody();
 //            os.write(response.getBytes());
 //            os.close();
-            App app = new App();
-
             app.command("/command", (req, ctx) -> {
                 return ctx.ack(":wave: pong");
             });
-
-            SlackAppServer server = new SlackAppServer(app);
-            try {
-                server.start();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
     }
 
