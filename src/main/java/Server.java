@@ -46,7 +46,17 @@ public class Server {
     static class CommandHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
-//            System.out.println("HELLO!!!!");
+            System.out.println("HELLO!!!!");
+            System.out.println(t.getResponseCode());
+
+            // parse request body to get code
+            try (InputStream fis = t.getRequestBody();
+                 InputStreamReader isr = new InputStreamReader(fis,
+                         StandardCharsets.UTF_8);
+                 BufferedReader br = new BufferedReader(isr)) {
+
+                br.lines().forEach(line -> System.out.println("*" + line + "*"));
+            }
 //            String response = "Server is working!";
 //            t.sendResponseHeaders(200, response.length());
 //            OutputStream os = t.getResponseBody();
