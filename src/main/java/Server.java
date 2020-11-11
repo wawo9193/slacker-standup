@@ -1,4 +1,6 @@
+import com.slack.api.bolt.App;
 import com.slack.api.bolt.AppConfig;
+import com.slack.api.bolt.jetty.SlackAppServer;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -13,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import com.slack.api.webhook.WebhookResponse;
 
 public class Server {
     public static void main(String[] args) throws Exception {
@@ -32,12 +35,24 @@ public class Server {
     static class CommandHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
-            System.out.println("HELLO!!!!");
-            String response = "Server is working!";
-            t.sendResponseHeaders(200, response.length());
-            OutputStream os = t.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
+//            System.out.println("HELLO!!!!");
+//            String response = "Server is working!";
+//            t.sendResponseHeaders(200, response.length());
+//            OutputStream os = t.getResponseBody();
+//            os.write(response.getBytes());
+//            os.close();
+            App app = new App();
+
+            app.command("/command", (req, ctx) -> {
+                return ctx.ack(":wave: pong");
+            });
+
+            SlackAppServer server = new SlackAppServer(app);
+            try {
+                server.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
