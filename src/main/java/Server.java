@@ -33,6 +33,9 @@ public class Server {
 //        private String SLACK_BOT_TOKEN="xoxb-1342824380833-1491088995860-uXD4xZf5sdWeopPZI6qHaJDP";
 //        private String SLACK_SIGNING_SECRET="c4bc66b49a798ffc1a0d90d2f4a55a86";
         app = new App();
+        app.command("/command", (req, ctx) -> {
+            return ctx.ack(":wave: pong");
+        });
         SlackAppServer boltServer = new SlackAppServer(app);
         try {
             boltServer.start();
@@ -62,9 +65,7 @@ public class Server {
 //            OutputStream os = t.getResponseBody();
 //            os.write(response.getBytes());
 //            os.close();
-            app.command("/command", (req, ctx) -> {
-                return ctx.ack(":wave: pong");
-            });
+
         }
     }
 
