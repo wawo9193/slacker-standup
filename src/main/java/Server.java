@@ -60,11 +60,11 @@ public class Server {
 
                 br.lines().forEach(line -> System.out.println("*" + line + "*"));
             }
-//            String response = "Server is working!";
-//            t.sendResponseHeaders(200, response.length());
-//            OutputStream os = t.getResponseBody();
-//            os.write(response.getBytes());
-//            os.close();
+            String response = "Server is working!";
+            t.sendResponseHeaders(200, response.length());
+            OutputStream os = t.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
 
         }
     }
