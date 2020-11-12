@@ -46,7 +46,7 @@ public class Server {
                 // Call the chat.postMessage method using the built-in WebClient
                 var result = client.chatPostMessage(r -> r
                                 .token(System.getenv("SLACK_BOT_TOKEN"))
-                                .channel("D01DU5G7Z7H")
+                                .channel("C01E6T2H1C7")
                                 .text("Testing text")
                         // TODO: create blocks[] array to send richer content
                 );
