@@ -16,10 +16,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import com.slack.api.webhook.WebhookResponse;
+import com.slack.api.Slack;
+import com.slack.api.methods.SlackApiException;
+import org.slf4j.LoggerFactory;
+import java.io.IOException;
 
 public class Server {
-    private static App app;
-
     public static void main(String[] args) throws Exception {
         int PORT = Integer.valueOf(System.getenv("PORT"));
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
@@ -29,19 +31,8 @@ public class Server {
         var config = new AppConfig();
         config.setSingleTeamBotToken(System.getenv("SLACK_BOT_TOKEN"));
         config.setSigningSecret(System.getenv("SLACK_SIGNING_SECRET"));
-        System.out.println("!*********Hilkajsdkflj");
-//        private String SLACK_BOT_TOKEN="xoxb-1342824380833-1491088995860-uXD4xZf5sdWeopPZI6qHaJDP";
-//        private String SLACK_SIGNING_SECRET="c4bc66b49a798ffc1a0d90d2f4a55a86";
-        app = new App();
-        app.command("/command", (req, ctx) -> {
-            return ctx.ack(":wave: pong");
-        });
-        SlackAppServer boltServer = new SlackAppServer(app);
-        try {
-            boltServer.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        System.out.println("Running on port: " + System.getenv("PORT"));
+
         server.setExecutor(null); // creates a default executor
         server.start();
     }
@@ -49,28 +40,34 @@ public class Server {
     static class CommandHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
-            System.out.println("HELLO!!!!");
-            System.out.println(t.getResponseCode());
+            var client = Slack.getInstance().methods();
+            var logger = LoggerFactory.getLogger("slacker-standup");
+            try {
+                // Call the chat.postMessage method using the built-in WebClient
+                var result = client.chatPostMessage(r -> r
+                                .token(System.getenv("SLACK_BOT_TOKEN"))
+                                .channel("D01DU5G7Z7H")
+                                .text("Testing text")
+                        // TODO: create blocks[] array to send richer content
+                );
 
-            // parse request body to get code
-            try (InputStream fis = t.getRequestBody();
-                 InputStreamReader isr = new InputStreamReader(fis,
-                         StandardCharsets.UTF_8);
-                 BufferedReader br = new BufferedReader(isr)) {
+                // Send response to request
+                String response = "Much success!";
+                t.sendResponseHeaders(200, response.length());
+                OutputStream os = t.getResponseBody();
+                os.write(response.getBytes());
+                os.close();
 
-                br.lines().forEach(line -> System.out.println("*" + line + "*"));
+                // Print result in console, which includes information about the message (like TS)
+                logger.info("result {}", result);
+            } catch (IOException | SlackApiException e) {
+                logger.error("error: {}", e.getMessage(), e);
             }
-            String response = "Server is working!";
-            t.sendResponseHeaders(200, response.length());
-            OutputStream os = t.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
-
         }
     }
 
+    // If we need to authorize a user, here is some beginning code...
     static class OauthHandler implements HttpHandler {
-
         protected static String createUrl(int query_code) {
             String query_string = "https://slack.com/api/oauth.access?";
             query_string += "code=" + query_code + "&client_id=" + System.getenv("CLIENT_ID") + "&client_secret=" + System.getenv("CLIENT_SECRET");
