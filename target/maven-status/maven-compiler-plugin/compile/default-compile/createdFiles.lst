@@ -1,6 +1,5 @@
-Server$CommandHandler.class
 Slack.class
 Server.class
 ChatScheduleMessage.class
-Server$OauthHandler.class
 MyApp.class
+Server$CommandHandler.class
