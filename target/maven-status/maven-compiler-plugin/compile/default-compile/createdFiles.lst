@@ -1,5 +1,3 @@
 Slack.class
 Server.class
-ChatScheduleMessage.class
-MyApp.class
-Server$CommandHandler.class
+Scheduler.class
