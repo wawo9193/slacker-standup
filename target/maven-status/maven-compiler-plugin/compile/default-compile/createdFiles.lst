@@ -1,3 +1,6 @@
+Observer.class
+Scheduler.class
+Views.class
 Slack.class
 Server.class
-Scheduler.class
+Subject.class

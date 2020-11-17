@@ -28,7 +28,7 @@ import static com.slack.api.model.block.composition.BlockCompositions.plainText;
 import static com.slack.api.model.block.element.BlockElements.*;
 import static org.quartz.JobBuilder.newJob;
 
-public class Scheduler implements Job {
+public class Scheduler implements Job{
 
     private static ArrayList<String> selectedDays;
     private final Logger logger = LoggerFactory.getLogger("slacker-standup");
@@ -55,12 +55,13 @@ public class Scheduler implements Job {
             var post_result = client.chatPostMessage(r -> r
                     // The token you used to initialize your app
                     .token(System.getenv("SLACK_BOT_TOKEN"))
-                    .channel("U019Q5UCUCS")
+                    .channel("D01E8T8L6DQ")
                     .blocks(asBlocks(
                             section(section -> section.text(markdownText(":wave: Press the button to fill out standup!"))),
                             actions(actions -> actions
                                     .elements(asElements(
-                                            button(b -> b.actionId("standup-modal").text(plainText(pt -> pt.text("Enter Standup"))))
+                                            button(b -> b.actionId("standup-modal").text(plainText(pt -> pt.text("Enter Standup")))),
+                                            button(b -> b.actionId("standup-modal-skip").text(plainText(pt -> pt.text("Skip standup"))))
                                     ))
                             )))
             );
@@ -141,4 +142,3 @@ public class Scheduler implements Job {
 //            sched.scheduleJob(job, trigger);
         }
     }
-}
