@@ -22,10 +22,13 @@ import static com.slack.api.model.block.composition.BlockCompositions.*;
 import static com.slack.api.model.block.element.BlockElements.*;
 import static com.slack.api.model.view.Views.*;
 
-public class Server{
+public class Server implements Subject{
 
     private static final Logger logger = LoggerFactory.getLogger("slacker-standup");
     private static final App app = new App();
+
+    protected String time;
+    protected ArrayList<Observer> observers;
 //
 //    static View buildScheduleView() {
 //        return view(view -> view
@@ -255,5 +258,23 @@ public class Server{
         logger.info("RUNNING NOW ON : " + port);
         var slack_server = new SlackAppServer(app, port);
         slack_server.start();
+    }
+
+
+    public void addObserver(Observer observer){
+        observers.add(observer);
+    }
+    public void removeObserver(Observer observer){
+        int var = observers.indexOf(observer);
+        if(var >= 0){
+            observers.remove(var);
+        }
+    }
+    public String notifyObservers() {
+        String output = new String();
+        for (Observer o : observers){
+            output += o.update(time);
+        }
+        return output;
     }
 }

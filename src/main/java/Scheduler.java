@@ -15,11 +15,13 @@ import static com.slack.api.model.block.composition.BlockCompositions.plainText;
 import static com.slack.api.model.block.element.BlockElements.*;
 import static org.quartz.JobBuilder.newJob;
 
-public class Scheduler implements Job{
+public class Scheduler implements Job, Observer{
 
     private static ArrayList<String> selectedDays;
     private final Logger logger = LoggerFactory.getLogger("slacker-standup");
     private final MethodsClient client = Slack.getInstance().methods();
+
+    protected String time;
 
     public Scheduler(){
         selectedDays = new ArrayList<>();
@@ -129,3 +131,9 @@ public class Scheduler implements Job{
 //            sched.scheduleJob(job, trigger);
 //        }
     }
+
+    public String update(String time){
+        this.time = time;
+        return this.time;
+    }
+}
