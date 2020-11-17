@@ -61,17 +61,17 @@ public class Views {
                 .blocks(asBlocks(
                         input(input -> input
                                 .blockId("prev-tasks")
-                                .element(plainTextInput(pti -> pti.actionId("agenda-action").multiline(true)))
+                                .element(plainTextInput(pti -> pti.actionId("agenda-1").multiline(true)))
                                 .label(plainText(pt -> pt.text("What have you been working on?").emoji(true)))
                         ),
                         input(input -> input
                                 .blockId("to-do")
-                                .element(plainTextInput(pti -> pti.actionId("agenda-action").multiline(true)))
-                                .label(plainText(pt -> pt.text("What have you been working on?").emoji(true)))
+                                .element(plainTextInput(pti -> pti.actionId("agenda-2").multiline(true)))
+                                .label(plainText(pt -> pt.text("What will you be working on?").emoji(true)))
                         ),
                         input(input -> input
                                 .blockId("blockers")
-                                .element(plainTextInput(pti -> pti.actionId("agenda-action").multiline(true)))
+                                .element(plainTextInput(pti -> pti.actionId("agenda-3").multiline(true)))
                                 .label(plainText(pt -> pt.text("Do you have any blockers?").emoji(true)))
                         )
                 ))
