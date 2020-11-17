@@ -4,15 +4,23 @@ import com.slack.api.bolt.jetty.SlackAppServer;
 import com.slack.api.methods.MethodsClient;
 import com.slack.api.model.User;
 import org.quartz.*;
+import static org.quartz.TriggerBuilder.*;
+import static org.quartz.CronScheduleBuilder.*;
+import static org.quartz.DateBuilder.*;
+
+import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import com.slack.api.Slack;
 import com.slack.api.methods.SlackApiException;
 import org.quartz.SchedulerException;
+import org.springframework.scheduling.support.CronTrigger;
+
 import static com.slack.api.model.block.Blocks.*;
 import static com.slack.api.model.block.Blocks.actions;
 import static com.slack.api.model.block.composition.BlockCompositions.markdownText;
@@ -91,17 +99,17 @@ public class Scheduler implements Job {
     }
 
     public static void schedule() throws SchedulerException {
-        SchedulerFactory schedFact = new org.quartz.impl.StdSchedulerFactory();
+        SchedulerFactory schedFact = new StdSchedulerFactory();
         
         org.quartz.Scheduler sched = schedFact.getScheduler();
 
         sched.start();
 
         // Delete the job with the trigger
-//        sched.interrupt("myJob");
-//        sched.deleteJob(JobKey.jobKey("myJob", "group1"));
+        sched.interrupt("myJob");
+        sched.deleteJob(JobKey.jobKey("myJob", "group1"));
 
-        // define the job and tie it to our HelloJob class
+        // define the job and tie it to our myJob class
         JobDetail job = newJob(Scheduler.class)
                 .withIdentity("myJob", "group1")
                 .build();
@@ -115,24 +123,22 @@ public class Scheduler implements Job {
         // Tell quartz to schedule the job using our trigger
         sched.scheduleJob(job, trigger);
 
-        System.out.println("!!!!!" + selectedDays.get(0));
-
-        // Trigger job to run when specified
-//        for (String day : this.days) {
+//        // Trigger job to run when specified
+//        for (String day : selectedDays) {
 //            // define the job and tie it to our HelloJob class
 //            JobDetail job = newJob(Scheduler.class)
 //                    .withIdentity("myJob", "group" + day)
 //                    .build();
 //
 //            // Trigger the job to run at 10am every day specified
-//            Trigger trigger = TriggerBuilder.newTrigger()
+//            Trigger trigger = newTrigger()
 //                    .withIdentity("myTrigger", "group" + day)
-//                    .withSchedule(cronSchedule("0 0 10 ? * " + day))
+//                    .withSchedule(cronSchedule("0 0 10 ? * " + day)
+//                    .inTimeZone(TimeZone.getTimeZone("America/Denver")))
 //                    .build();
-//
 //
 //            // Tell quartz to schedule the job using our trigger
 //            sched.scheduleJob(job, trigger);
-//        }
+        }
     }
 }
