@@ -2,6 +2,8 @@ import com.slack.api.bolt.App;
 import com.slack.api.bolt.AppConfig;
 import com.slack.api.bolt.jetty.SlackAppServer;
 import com.slack.api.bolt.response.Response;
+import com.slack.api.methods.MethodsClient;
+import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import com.slack.api.methods.response.views.ViewsOpenResponse;
 import com.slack.api.model.view.View;
 import com.slack.api.model.view.ViewState;
@@ -64,17 +66,17 @@ public class Server {
                 .blocks(asBlocks(
                         input(input -> input
                                 .blockId("prev-tasks")
-                                .element(plainTextInput(pti -> pti.actionId("agenda-action").multiline(true)))
+                                .element(plainTextInput(pti -> pti.actionId("agenda-1").multiline(true)))
                                 .label(plainText(pt -> pt.text("What have you been working on?").emoji(true)))
                         ),
                         input(input -> input
                                 .blockId("to-do")
-                                .element(plainTextInput(pti -> pti.actionId("agenda-action").multiline(true)))
-                                .label(plainText(pt -> pt.text("What have you been working on?").emoji(true)))
+                                .element(plainTextInput(pti -> pti.actionId("agenda-2").multiline(true)))
+                                .label(plainText(pt -> pt.text("What will you work on?").emoji(true)))
                         ),
                         input(input -> input
                                 .blockId("blockers")
-                                .element(plainTextInput(pti -> pti.actionId("agenda-action").multiline(true)))
+                                .element(plainTextInput(pti -> pti.actionId("agenda-3").multiline(true)))
                                 .label(plainText(pt -> pt.text("Do you have any blockers?").emoji(true)))
                         )
                 ))
@@ -155,21 +157,37 @@ public class Server {
         });
 
         app.viewSubmission("submission-standups", (req, ctx) -> {
-            Map<String, Map<String, ViewState.Value>> stateValues = req.getPayload().getView().getState().getValues();
-            List<ViewState.SelectedOption> days = stateValues.get("days-block").get("select-days").getSelectedOptions();
-            String prev_tasks = stateValues.get("prev-tasks");
-
-
-            ArrayList<String> selectedDays = new ArrayList<>();
-            for (ViewState.SelectedOption element : days) {
-                selectedDays.add(element.getValue());
-            }
+            System.out.println(req.getPayload());
+            String username = req.getPayload().getUser().getUsername();
 
             try {
-                Scheduler scheduler = new Scheduler(selectedDays);
-                scheduler.schedule();
-            } catch (SchedulerException e) {
-                e.printStackTrace();
+                MethodsClient client = Slack.getInstance().methods();
+                Map<String, Map<String, ViewState.Value>> stateValues = req.getPayload().getView().getState().getValues();
+                String inp1 = stateValues.get("prev-tasks").get("agenda-1").getValue();
+                String inp2 = stateValues.get("to-do").get("agenda-2").getValue();
+                String inp3 = stateValues.get("blockers").get("agenda-3").getValue();
+
+                ChatPostMessageResponse response = client.chatPostMessage(r -> r
+                        // The token you used to initialize your app
+                        .token(System.getenv("SLACK_BOT_TOKEN"))
+                        .channel(System.getenv("SLACK_CHANNEL_ID"))
+                        .blocks(asBlocks(
+                                section(section -> section.text(markdownText("*@" + username + " submitted a standup! :rocket:*"))),
+                                divider(),
+                                section(section -> section.text(markdownText("*What have you been working on?*\n"))),
+                                section(section -> section.text(markdownText(inp1 + "\n"))),
+                                divider(),
+                                section(section -> section.text(markdownText("*What will you work on?*\n"))),
+                                section(section -> section.text(markdownText(inp2 + "\n"))),
+                                divider(),
+                                section(section -> section.text(markdownText("*Do you have any blockers?*\n"))),
+                                section(section -> section.text(markdownText(inp3 + "\n")))
+                        ))
+                );
+                // Print response
+                logger.info("response: {}", response);
+            } catch (IOException | SlackApiException e) {
+                logger.error("error: {}", e.getMessage(), e);
             }
             return ctx.ack();
         });
