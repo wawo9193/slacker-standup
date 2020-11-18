@@ -17,9 +17,11 @@ import static org.quartz.JobBuilder.newJob;
 
 public class Scheduler implements Job, Observer {
 
-    private static ArrayList<String> selectedDays;
+    private ArrayList<String> selectedDays;
     private final Logger logger = LoggerFactory.getLogger("slacker-standup");
     private final MethodsClient client = Slack.getInstance().methods();
+
+    static final String SLACK_BOT_TOKEN = System.getenv("SLACK_BOT_TOKEN");
 
     public void update(ArrayList<String> selectedDays) {
         this.selectedDays = selectedDays;
@@ -29,21 +31,20 @@ public class Scheduler implements Job, Observer {
         selectedDays = new ArrayList<>();
     }
 
-
     @Override
     public void execute(JobExecutionContext jec) throws JobExecutionException {
 
         System.out.println("******");
         try {
             var user_result = client.usersList(r -> r
-                    .token(System.getenv("SLACK_BOT_TOKEN"))
+                    .token(SLACK_BOT_TOKEN)
             );
 
             // Call the chat.postMessage method using the built-in WebClient
             var post_result = client.chatPostMessage(r -> r
                     // The token you used to initialize your app
-                    .token(System.getenv("SLACK_BOT_TOKEN"))
-                    .channel("D01E8T8L6DQ")
+                    .token(SLACK_BOT_TOKEN)
+                    .channel("D01DU5G7Z7H")
                     .blocks(asBlocks(
                             section(section -> section.text(markdownText(":wave: Press the button to fill out standup!"))),
                             actions(actions -> actions
@@ -79,11 +80,10 @@ public class Scheduler implements Job, Observer {
 //            }
 
         } catch (IOException e) {
-            logger.error("IO Exception", e);
+            logger.error("IO Exception: {}", e);
         } catch (SlackApiException e) {
-            logger.error("SlackApiException", e);
+            logger.error("SlackApiException: {}", e);
         }
-
         logger.info("executing job");
     }
 
@@ -95,8 +95,8 @@ public class Scheduler implements Job, Observer {
         sched.start();
 
         // Delete the job with the trigger
-        sched.interrupt("myJob");
-        sched.deleteJob(JobKey.jobKey("myJob", "group1"));
+        // sched.interrupt("myJob");
+        // sched.deleteJob(JobKey.jobKey("myJob", "group1"));
 
         // define the job and tie it to our myJob class
         JobDetail job = newJob(Scheduler.class)
