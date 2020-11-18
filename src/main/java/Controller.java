@@ -58,6 +58,7 @@ public class Controller implements Subject {
                                 // The token you used to initialize your app
                                 .token(SLACK_BOT_TOKEN)
                                 .channel(channelId)
+                                .text("Schedule your standup!")
                                 .blocks(asBlocks(
                                     section(section -> section.text(markdownText(":wave: Press the button to schedule!"))),
                                     actions(actions -> actions
@@ -140,7 +141,7 @@ public class Controller implements Subject {
                         // The token you used to initialize your app
                         .token(SLACK_BOT_TOKEN)
                         .channel(channelId)
-                        .text("You cancelled your standup:unamused:")
+                        .text("You cancelled your standup :unamused:")
                 );
                 // Print result, which includes information about the message (like TS)
                 logger.info("result {}", result);
