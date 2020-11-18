@@ -22,22 +22,27 @@ import static com.slack.api.model.block.element.BlockElements.*;
 public class Controller implements Subject {
 //    SLACK_BOT_TOKEN="xoxb-1342824380833-1491088995860-uXD4xZf5sdWeopPZI6qHaJDP";
 //    SLACK_SIGNING_SECRET="c4bc66b49a798ffc1a0d90d2f4a55a86";
-    private static final Logger logger = LoggerFactory.getLogger("slacker-standup");
-    private static final App app = new App();
-    private static final Observer observer = new Scheduler();
+    static final Logger logger = LoggerFactory.getLogger("slacker-standup");
+    static final App app = new App();
+    static final Observer observer = new Scheduler();
+    static final Scheduler scheduler = new Scheduler();
+    static final Controller controller = new Controller();
+    static final Views view = new Views();
 
+    // Env variables
+    static final String SLACK_BOT_TOKEN = System.getenv("SLACK_BOT_TOKEN");
+    static final String SLACK_SIGNING_SECRET = System.getenv("SLACK_SIGNING_SECRET");
+    static final String SLACK_CHANNEL_ID = System.getenv("SLACK_CHANNEL_ID");
+    static final Integer PORT = Integer.valueOf(System.getenv("PORT"));
 
     public void notifyObservers(ArrayList<String> days){
         observer.update(days);
     }
 
     public static void main(String[] args) throws Exception {
-        var config = new AppConfig();
-        Views view = new Views();
-        Scheduler scheduler = new Scheduler();
-        Controller controller = new Controller();
-        config.setSingleTeamBotToken(System.getenv("SLACK_BOT_TOKEN"));
-        config.setSigningSecret(System.getenv("SLACK_SIGNING_SECRET"));
+        AppConfig config = new AppConfig();
+        config.setSingleTeamBotToken(SLACK_BOT_TOKEN);
+        config.setSigningSecret(SLACK_SIGNING_SECRET);
 
         app.command("/schedule", (req, ctx) -> {
             String commandArgText = req.getPayload().getText();
@@ -51,7 +56,7 @@ public class Controller implements Subject {
                 // Call the chat.postMessage method using the built-in WebClient
                 var result = client.chatPostMessage(r -> r
                                 // The token you used to initialize your app
-                                .token(System.getenv("SLACK_BOT_TOKEN"))
+                                .token(SLACK_BOT_TOKEN)
                                 .channel(channelId)
                                 .blocks(asBlocks(
                                     section(section -> section.text(markdownText(":wave: Press the button to schedule!"))),
@@ -94,7 +99,7 @@ public class Controller implements Subject {
                 // Call the chat.postMessage method using the built-in WebClient
                 var result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
-                        .token(System.getenv("SLACK_BOT_TOKEN"))
+                        .token(SLACK_BOT_TOKEN)
                         .channel(req.getPayload().getUser().getId())
                         .text("You skipped your standup today :pensive:, see you next time!:smile:")
                 );
@@ -120,21 +125,21 @@ public class Controller implements Subject {
                 controller.notifyObservers(selectedDays);
                 scheduler.schedule();
             } catch (SchedulerException e) {
-                e.printStackTrace();
+                logger.error("error: {}",e);
             }
             return ctx.ack();
         });
 
         app.viewClosed("submission-standups", (req, ctx) -> {
             var client = Slack.getInstance().methods();
-            var id = req.getPayload().getUser().getId();
+            var channelId = req.getPayload().getUser().getId();
 
             try {
                 // Call the chat.postMessage method using the built-in WebClient
                 var result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
-                        .token(System.getenv("SLACK_BOT_TOKEN"))
-                        .channel(id)
+                        .token(SLACK_BOT_TOKEN)
+                        .channel(channelId)
                         .text("You cancelled your standup:unamused:")
                 );
                 // Print result, which includes information about the message (like TS)
@@ -147,15 +152,15 @@ public class Controller implements Subject {
         });
 
         app.viewClosed("schedule-standups", (req, ctx) -> {
-            var client = Slack.getInstance().methods();
-            var id = req.getPayload().getUser().getId();
+            MethodsClient client = Slack.getInstance().methods();
+            String channelId = req.getPayload().getUser().getId();
 
             try {
                 // Call the chat.postMessage method using the built-in WebClient
-                var result = client.chatPostMessage(r -> r
+                ChatPostMessageResponse result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
-                        .token(System.getenv("SLACK_BOT_TOKEN"))
-                        .channel(id)
+                        .token(SLACK_BOT_TOKEN)
+                        .channel(channelId)
                         .text("You cancelled scheduling for your standup.:confused:")
                 );
                 // Print result, which includes information about the message (like TS)
@@ -180,8 +185,8 @@ public class Controller implements Subject {
 
                 ChatPostMessageResponse response = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
-                        .token(System.getenv("SLACK_BOT_TOKEN"))
-                        .channel(System.getenv("SLACK_CHANNEL_ID"))
+                        .token(SLACK_BOT_TOKEN)
+                        .channel(SLACK_CHANNEL_ID)
                         .text("A Standup was Submitted!")
                         .blocks(asBlocks(
                                 section(section -> section.text(markdownText("*@" + username + " submitted a standup! :rocket:*"))),
@@ -204,11 +209,8 @@ public class Controller implements Subject {
             return ctx.ack();
         });
 
-        var port = Integer.valueOf(System.getenv("PORT"));
-        logger.info("RUNNING NOW ON : " + port);
-        var slack_server = new SlackAppServer(app, port);
+        logger.info("RUNNING NOW ON : " + PORT);
+        var slack_server = new SlackAppServer(app, PORT);
         slack_server.start();
     }
-
-
 }
