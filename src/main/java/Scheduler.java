@@ -15,15 +15,13 @@ import static com.slack.api.model.block.composition.BlockCompositions.plainText;
 import static com.slack.api.model.block.element.BlockElements.*;
 import static org.quartz.JobBuilder.newJob;
 
-public class Scheduler implements Job, Observer{
+public class Scheduler implements Job {
 
     private static ArrayList<String> selectedDays;
     private final Logger logger = LoggerFactory.getLogger("slacker-standup");
     private final MethodsClient client = Slack.getInstance().methods();
 
-    protected String time;
-
-    public Scheduler(){
+    public Scheduler() {
         selectedDays = new ArrayList<>();
     }
 
@@ -37,7 +35,7 @@ public class Scheduler implements Job, Observer{
         System.out.println("******");
         try {
             var user_result = client.usersList(r -> r
-                .token(System.getenv("SLACK_BOT_TOKEN"))
+                    .token(System.getenv("SLACK_BOT_TOKEN"))
             );
 
             // Call the chat.postMessage method using the built-in WebClient
@@ -90,7 +88,7 @@ public class Scheduler implements Job, Observer{
 
     public static void schedule() throws SchedulerException {
         SchedulerFactory schedFact = new StdSchedulerFactory();
-        
+
         org.quartz.Scheduler sched = schedFact.getScheduler();
 
         sched.start();
@@ -130,10 +128,5 @@ public class Scheduler implements Job, Observer{
 //            // Tell quartz to schedule the job using our trigger
 //            sched.scheduleJob(job, trigger);
 //        }
-    }
-
-    public String update(String time){
-        this.time = time;
-        return this.time;
     }
 }

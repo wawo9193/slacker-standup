@@ -22,69 +22,10 @@ import static com.slack.api.model.block.composition.BlockCompositions.*;
 import static com.slack.api.model.block.element.BlockElements.*;
 import static com.slack.api.model.view.Views.*;
 
-public class Server implements Subject{
+public class Server{
 
     private static final Logger logger = LoggerFactory.getLogger("slacker-standup");
     private static final App app = new App();
-
-    protected String time;
-    protected ArrayList<Observer> observers;
-//
-//    static View buildScheduleView() {
-//        return view(view -> view
-//                .callbackId("schedule-standups")
-//                .type("modal")
-//                .notifyOnClose(true)
-//                .title(viewTitle(title -> title.type("plain_text").text("Standup").emoji(true)))
-//                .submit(viewSubmit(submit -> submit.type("plain_text").text("Submit").emoji(true)))
-//                .close(viewClose(close -> close.type("plain_text").text("Cancel").emoji(true)))
-//                .blocks(asBlocks(
-//                        input(input -> input
-//                                .label(plainText("Select days for standup:"))
-//                                .blockId("days-block")
-//                                .element(checkboxes(i -> i
-//                                        .actionId("select-days")
-//                                        .options(Arrays.asList(
-//                                                option(plainText("Monday"), "2"), // value represents cron job day of week value
-//                                                option(plainText("Tuesday"), "3"),
-//                                                option(plainText("Wednesday"), "4"),
-//                                                option(plainText("Thursday"), "5"),
-//                                                option(plainText("Friday"), "6")
-//                                        ))
-//
-//                                ))
-//                        )
-//                ))
-//        );
-//    }
-//
-//    static View buildStandupView() {
-//        return view(view -> view
-//                .callbackId("submission-standups")
-//                .type("modal")
-//                .notifyOnClose(true)
-//                .title(viewTitle(title -> title.type("plain_text").text("Standup").emoji(true)))
-//                .submit(viewSubmit(submit -> submit.type("plain_text").text("Submit").emoji(true)))
-//                .close(viewClose(close -> close.type("plain_text").text("Cancel").emoji(true)))
-//                .blocks(asBlocks(
-//                        input(input -> input
-//                                .blockId("prev-tasks")
-//                                .element(plainTextInput(pti -> pti.actionId("agenda-1").multiline(true)))
-//                                .label(plainText(pt -> pt.text("What have you been working on?").emoji(true)))
-//                        ),
-//                        input(input -> input
-//                                .blockId("to-do")
-//                                .element(plainTextInput(pti -> pti.actionId("agenda-2").multiline(true)))
-//                                .label(plainText(pt -> pt.text("What will you work on?").emoji(true)))
-//                        ),
-//                        input(input -> input
-//                                .blockId("blockers")
-//                                .element(plainTextInput(pti -> pti.actionId("agenda-3").multiline(true)))
-//                                .label(plainText(pt -> pt.text("Do you have any blockers?").emoji(true)))
-//                        )
-//                ))
-//        );
-//    }
 
     public static void main(String[] args) throws Exception {
         var config = new AppConfig();
@@ -150,7 +91,7 @@ public class Server implements Subject{
                 var result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
                         .token(System.getenv("SLACK_BOT_TOKEN"))
-                        .channel("D01E8T8L6DQ")
+                        .channel(req.getPayload().getUser().getId())
                         .text("You skipped your standup today :pensive:, see you next time!:smile:")
                 );
                 // Print result, which includes information about the message (like TS)
@@ -179,14 +120,17 @@ public class Server implements Subject{
             }
             return ctx.ack();
         });
+
         app.viewClosed("submission-standups", (req, ctx) -> {
             var client = Slack.getInstance().methods();
+            var id = req.getPayload().getUser().getId();
+
             try {
                 // Call the chat.postMessage method using the built-in WebClient
                 var result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
                         .token(System.getenv("SLACK_BOT_TOKEN"))
-                        .channel("D01E8T8L6DQ")
+                        .channel(id)
                         .text("You cancelled your standup:unamused:")
                 );
                 // Print result, which includes information about the message (like TS)
@@ -200,12 +144,14 @@ public class Server implements Subject{
 
         app.viewClosed("schedule-standups", (req, ctx) -> {
             var client = Slack.getInstance().methods();
+            var id = req.getPayload().getUser().getId();
+
             try {
                 // Call the chat.postMessage method using the built-in WebClient
                 var result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
                         .token(System.getenv("SLACK_BOT_TOKEN"))
-                        .channel("D01E8T8L6DQ")
+                        .channel(id)
                         .text("You cancelled scheduling for your standup.:confused:")
                 );
                 // Print result, which includes information about the message (like TS)
@@ -219,7 +165,6 @@ public class Server implements Subject{
 
 
         app.viewSubmission("submission-standups", (req, ctx) -> {
-            System.out.println(req.getPayload());
             String username = req.getPayload().getUser().getUsername();
 
             try {
@@ -233,13 +178,14 @@ public class Server implements Subject{
                         // The token you used to initialize your app
                         .token(System.getenv("SLACK_BOT_TOKEN"))
                         .channel(System.getenv("SLACK_CHANNEL_ID"))
+                        .text("A Standup was Submitted!")
                         .blocks(asBlocks(
                                 section(section -> section.text(markdownText("*@" + username + " submitted a standup! :rocket:*"))),
                                 divider(),
                                 section(section -> section.text(markdownText("*What have you been working on?*\n"))),
                                 section(section -> section.text(markdownText(inp1 + "\n"))),
                                 divider(),
-                                section(section -> section.text(markdownText("*What will you work on?*\n"))),
+                                section(section -> section.text(markdownText("*What will you be working on?*\n"))),
                                 section(section -> section.text(markdownText(inp2 + "\n"))),
                                 divider(),
                                 section(section -> section.text(markdownText("*Do you have any blockers?*\n"))),
@@ -258,23 +204,5 @@ public class Server implements Subject{
         logger.info("RUNNING NOW ON : " + port);
         var slack_server = new SlackAppServer(app, port);
         slack_server.start();
-    }
-
-
-    public void addObserver(Observer observer){
-        observers.add(observer);
-    }
-    public void removeObserver(Observer observer){
-        int var = observers.indexOf(observer);
-        if(var >= 0){
-            observers.remove(var);
-        }
-    }
-    public String notifyObservers() {
-        String output = new String();
-        for (Observer o : observers){
-            output += o.update(time);
-        }
-        return output;
     }
 }
