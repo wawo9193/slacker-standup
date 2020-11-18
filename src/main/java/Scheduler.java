@@ -29,9 +29,6 @@ public class Scheduler implements Job, Observer {
         selectedDays = new ArrayList<>();
     }
 
-    public Scheduler(ArrayList<String> selectedDays) {
-        this.selectedDays = selectedDays;
-    }
 
     @Override
     public void execute(JobExecutionContext jec) throws JobExecutionException {
@@ -46,7 +43,7 @@ public class Scheduler implements Job, Observer {
             var post_result = client.chatPostMessage(r -> r
                     // The token you used to initialize your app
                     .token(System.getenv("SLACK_BOT_TOKEN"))
-                    .channel("D01DU5G7Z7H")
+                    .channel("D01E8T8L6DQ")
                     .blocks(asBlocks(
                             section(section -> section.text(markdownText(":wave: Press the button to fill out standup!"))),
                             actions(actions -> actions

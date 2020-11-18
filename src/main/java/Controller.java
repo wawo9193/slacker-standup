@@ -24,27 +24,20 @@ public class Controller implements Subject {
 //    SLACK_SIGNING_SECRET="c4bc66b49a798ffc1a0d90d2f4a55a86";
     private static final Logger logger = LoggerFactory.getLogger("slacker-standup");
     private static final App app = new App();
+    private static final Observer observer = new Scheduler();
 
-    public void addObserver(Observer o) {
 
-    }
-
-    public void removeObserver(Observer o) {
-
-    }
-
-    public void notifyObservers(){
-
+    public void notifyObservers(ArrayList<String> days){
+        observer.update(days);
     }
 
     public static void main(String[] args) throws Exception {
         var config = new AppConfig();
         Views view = new Views();
+        Scheduler scheduler = new Scheduler();
+        Controller controller = new Controller();
         config.setSingleTeamBotToken(System.getenv("SLACK_BOT_TOKEN"));
         config.setSigningSecret(System.getenv("SLACK_SIGNING_SECRET"));
-
-        App app = Controller.app;
-        Logger logger = Controller.logger;
 
         app.command("/schedule", (req, ctx) -> {
             String commandArgText = req.getPayload().getText();
@@ -64,7 +57,8 @@ public class Controller implements Subject {
                                     section(section -> section.text(markdownText(":wave: Press the button to schedule!"))),
                                     actions(actions -> actions
                                             .elements(asElements(
-                                                    button(b -> b.actionId("schedule-modal").text(plainText(pt -> pt.text("Schedule Standups"))))
+                                                    button(b -> b.actionId("schedule-modal").text(plainText(pt -> pt.text("Schedule Standups")))),
+                                                    button(b -> b.actionId("schedule-modal-skip").text(plainText(pt -> pt.text("Skip Standups"))))
                                             ))
                                     )))
                 );
@@ -123,7 +117,7 @@ public class Controller implements Subject {
             }
 
             try {
-                Scheduler scheduler = new Scheduler(selectedDays);
+                controller.notifyObservers(selectedDays);
                 scheduler.schedule();
             } catch (SchedulerException e) {
                 e.printStackTrace();
@@ -215,4 +209,6 @@ public class Controller implements Subject {
         var slack_server = new SlackAppServer(app, port);
         slack_server.start();
     }
+
+
 }
