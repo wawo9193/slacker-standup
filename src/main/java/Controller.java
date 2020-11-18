@@ -5,7 +5,6 @@ import com.slack.api.bolt.response.Response;
 import com.slack.api.methods.MethodsClient;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import com.slack.api.methods.response.views.ViewsOpenResponse;
-import com.slack.api.model.view.View;
 import com.slack.api.model.view.ViewState;
 import java.io.IOException;
 import com.slack.api.Slack;
@@ -14,18 +13,29 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import static com.slack.api.model.block.Blocks.*;
 import static com.slack.api.model.block.composition.BlockCompositions.*;
 import static com.slack.api.model.block.element.BlockElements.*;
-import static com.slack.api.model.view.Views.*;
 
-public class Server{
-
+public class Controller implements Subject {
+//    SLACK_BOT_TOKEN="xoxb-1342824380833-1491088995860-uXD4xZf5sdWeopPZI6qHaJDP";
+//    SLACK_SIGNING_SECRET="c4bc66b49a798ffc1a0d90d2f4a55a86";
     private static final Logger logger = LoggerFactory.getLogger("slacker-standup");
     private static final App app = new App();
+
+    public void addObserver(Observer o) {
+
+    }
+
+    public void removeObserver(Observer o) {
+
+    }
+
+    public void notifyObservers(){
+
+    }
 
     public static void main(String[] args) throws Exception {
         var config = new AppConfig();
@@ -33,8 +43,8 @@ public class Server{
         config.setSingleTeamBotToken(System.getenv("SLACK_BOT_TOKEN"));
         config.setSigningSecret(System.getenv("SLACK_SIGNING_SECRET"));
 
-        App app = Server.app;
-        Logger logger = Server.logger;
+        App app = Controller.app;
+        Logger logger = Controller.logger;
 
         app.command("/schedule", (req, ctx) -> {
             String commandArgText = req.getPayload().getText();
