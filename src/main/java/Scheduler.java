@@ -21,9 +21,8 @@ public class Scheduler implements Job, Observer {
     private final Logger logger = LoggerFactory.getLogger("slacker-standup");
     private final MethodsClient client = Slack.getInstance().methods();
 
-    public String update(String time) {
-
-        return "";
+    public void update(ArrayList<String> selectedDays) {
+        this.selectedDays = selectedDays;
     }
 
     public Scheduler() {

@@ -33,9 +33,8 @@ public class Controller implements Subject {
 
     }
 
-    public String notifyObservers(){
+    public void notifyObservers(){
 
-        return "";
     }
 
     public static void main(String[] args) throws Exception {
