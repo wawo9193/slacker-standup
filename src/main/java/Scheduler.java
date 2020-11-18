@@ -29,9 +29,6 @@ public class Scheduler implements Job, Observer {
         selectedDays = new ArrayList<>();
     }
 
-    public Scheduler(ArrayList<String> selectedDays) {
-        this.selectedDays = selectedDays;
-    }
 
     @Override
     public void execute(JobExecutionContext jec) throws JobExecutionException {
