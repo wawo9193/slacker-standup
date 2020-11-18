@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 public interface Observer {
-    public String update(String time);
+    public void update(ArrayList<String> time);
 }

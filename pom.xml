@@ -59,7 +59,7 @@
                             <manifest>
                                 <addClasspath>true</addClasspath>
                                 <classpathPrefix>lib/</classpathPrefix>
-                                <mainClass>Server</mainClass>
+                                <mainClass>Controller</mainClass>
                             </manifest>
                         </archive>
                     </configuration>
@@ -78,7 +78,7 @@
                     <configuration>
                         <archive>
                             <manifest>
-                                <mainClass>Server</mainClass>
+                                <mainClass>Controller</mainClass>
                             </manifest>
                         </archive>
                         <descriptorRefs>
