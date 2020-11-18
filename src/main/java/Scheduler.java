@@ -45,6 +45,7 @@ public class Scheduler implements Job, Observer {
                     // The token you used to initialize your app
                     .token(SLACK_BOT_TOKEN)
                     .channel("D01DU5G7Z7H")
+                    .text("Fill out your standup!")
                     .blocks(asBlocks(
                             section(section -> section.text(markdownText(":wave: Press the button to fill out standup!"))),
                             actions(actions -> actions
