@@ -1,3 +1,5 @@
+import com.slack.api.app_backend.slash_commands.SlashCommandResponseSender;
+import com.slack.api.app_backend.slash_commands.response.SlashCommandResponse;
 import com.slack.api.bolt.App;
 import com.slack.api.bolt.AppConfig;
 import com.slack.api.bolt.jetty.SlackAppServer;
@@ -9,19 +11,30 @@ import com.slack.api.model.view.ViewState;
 import java.io.IOException;
 import com.slack.api.Slack;
 import com.slack.api.methods.SlackApiException;
+import com.slack.api.webhook.WebhookResponse;
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpContext;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpPrincipal;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static com.slack.api.model.block.Blocks.*;
 import static com.slack.api.model.block.composition.BlockCompositions.*;
 import static com.slack.api.model.block.element.BlockElements.*;
 
 public class Controller implements Subject {
-//    SLACK_BOT_TOKEN="xoxb-1342824380833-1491088995860-uXD4xZf5sdWeopPZI6qHaJDP";
-//    SLACK_SIGNING_SECRET="c4bc66b49a798ffc1a0d90d2f4a55a86";
     static final Logger logger = LoggerFactory.getLogger("slacker-standup");
     static final App app = new App();
     static final Scheduler scheduler = new Scheduler();
@@ -44,21 +57,18 @@ public class Controller implements Subject {
         config.setSigningSecret(SLACK_SIGNING_SECRET);
 
         app.command("/schedule", (req, ctx) -> {
-//            String commandArgText = req.getPayload().getText();
             String channelId = req.getPayload().getChannelId();
-//            String channelName = req.getPayload().getChannelName();
-//            String text = "You said " + commandArgText + " at <#" + channelId + "|" + channelName + ">";
 
             var client = Slack.getInstance().methods();
-
-            try {
-                // Call the chat.postMessage method using the built-in WebClient
-                var result = client.chatPostMessage(r -> r
-                                // The token you used to initialize your app
-                                .token(SLACK_BOT_TOKEN)
-                                .channel(channelId)
-                                .text("Schedule your standup!")
-                                .blocks(asBlocks(
+            Runnable r = () -> {
+                try {
+                    // Call the chat.postMessage method using the built-in WebClient
+                    var result = client.chatPostMessage(r1 -> r1
+                            // The token you used to initialize your app
+                            .token(SLACK_BOT_TOKEN)
+                            .channel(channelId)
+                            .text("Schedule your standup!")
+                            .blocks(asBlocks(
                                     section(section -> section.text(markdownText(":wave: Press the button to schedule!"))),
                                     actions(actions -> actions
                                             .elements(asElements(
@@ -66,29 +76,25 @@ public class Controller implements Subject {
                                                     button(b -> b.actionId("schedule-modal-skip").text(plainText(pt -> pt.text("Skip Standups"))))
                                             ))
                                     )))
-                );
-                // Print result, which includes information about the message (like TS)
-                logger.info("result {}", result);
-            } catch (IOException | SlackApiException e) {
-                logger.error("error: {}", e.getMessage(), e);
-            }
+                    );
+                    // Print result, which includes information about the message (like TS)
+                    logger.info("result {}", result);
+                } catch (IOException | SlackApiException e) {
+                    logger.error("error: {}", e.getMessage(), e);
+                }
+            };
+
+            ExecutorService executor = Executors.newCachedThreadPool();
+            executor.submit(r);
+            executor.shutdown();
 
             return ctx.ack(); // respond with 200 OK
         });
 
         app.blockAction("schedule-modal", (req, ctx) -> {
-            ViewsOpenResponse viewsOpenRes = ctx.client().viewsOpen(r -> {
-                try {
-                    return r
-                            .triggerId(ctx.getTriggerId())
-                            .view(view.buildScheduleView());
-                } catch (IOException e) {
-                    logger.error("{}", e);
-                } catch (SlackApiException e) {
-                    logger.error("{}", e);
-                }
-                return r;
-            });
+            ViewsOpenResponse viewsOpenRes = ctx.client().viewsOpen(r -> r
+                    .triggerId(ctx.getTriggerId())
+                    .view(view.buildScheduleView()));
             if (viewsOpenRes.isOk()) return ctx.ack();
             else return Response.builder().statusCode(500).body(viewsOpenRes.getError()).build();
         });
@@ -124,7 +130,8 @@ public class Controller implements Subject {
         app.viewSubmission("schedule-standups", (req, ctx) -> {
             Map<String, Map<String, ViewState.Value>> stateValues = req.getPayload().getView().getState().getValues();
             List<ViewState.SelectedOption> days = stateValues.get("days-block").get("select-days").getSelectedOptions();
-
+            List<String> users = stateValues.get("user-block").get("select-user").getSelectedUsers();
+            String channel = stateValues.get("channel-block").get("select-channel").getSelectedChannel();
             ArrayList<String> selectedDays = new ArrayList<>();
             for (ViewState.SelectedOption element : days) {
                 selectedDays.add(element.getValue());
@@ -164,7 +171,6 @@ public class Controller implements Subject {
         app.viewClosed("schedule-standups", (req, ctx) -> {
             MethodsClient client = Slack.getInstance().methods();
             String channelId = req.getPayload().getUser().getId();
-            System.out.println("AHHHHHHH");
             try {
                 // Call the chat.postMessage method using the built-in WebClient
                 ChatPostMessageResponse result = client.chatPostMessage(r -> r
