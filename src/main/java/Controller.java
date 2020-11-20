@@ -130,7 +130,8 @@ public class Controller implements Subject {
         app.viewSubmission("schedule-standups", (req, ctx) -> {
             Map<String, Map<String, ViewState.Value>> stateValues = req.getPayload().getView().getState().getValues();
             List<ViewState.SelectedOption> days = stateValues.get("days-block").get("select-days").getSelectedOptions();
-
+            List<String> users = stateValues.get("user-block").get("select-user").getSelectedUsers();
+            String channel = stateValues.get("channel-block").get("select-channel").getSelectedChannel();
             ArrayList<String> selectedDays = new ArrayList<>();
             for (ViewState.SelectedOption element : days) {
                 selectedDays.add(element.getValue());
