@@ -77,18 +77,9 @@ public class Controller implements Subject {
         });
 
         app.blockAction("schedule-modal", (req, ctx) -> {
-            ViewsOpenResponse viewsOpenRes = ctx.client().viewsOpen(r -> {
-                try {
-                    return r
-                            .triggerId(ctx.getTriggerId())
-                            .view(view.buildScheduleView());
-                } catch (IOException e) {
-                    logger.error("{}", e);
-                } catch (SlackApiException e) {
-                    logger.error("{}", e);
-                }
-                return r;
-            });
+            ViewsOpenResponse viewsOpenRes = ctx.client().viewsOpen(r -> r
+                    .triggerId(ctx.getTriggerId())
+                    .view(view.buildScheduleView()));
             if (viewsOpenRes.isOk()) return ctx.ack();
             else return Response.builder().statusCode(500).body(viewsOpenRes.getError()).build();
         });
