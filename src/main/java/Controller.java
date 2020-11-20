@@ -34,8 +34,8 @@ public class Controller implements Subject {
     static final String SLACK_CHANNEL_ID = System.getenv("SLACK_CHANNEL_ID");
     static final Integer PORT = Integer.valueOf(System.getenv("PORT"));
 
-    public void notifyObservers(ArrayList<String> days){
-        scheduler.update(days);
+    public void notifyObservers(ArrayList<String> days, String times, String timeZone){
+        scheduler.update(days, times, timeZone);
     }
 
     public static void main(String[] args) throws Exception {
@@ -62,8 +62,8 @@ public class Controller implements Subject {
                                     section(section -> section.text(markdownText(":wave: Press the button to schedule!"))),
                                     actions(actions -> actions
                                             .elements(asElements(
-                                                    button(b -> b.actionId("schedule-modal").text(plainText(pt -> pt.text("Schedule Standups")))),
-                                                    button(b -> b.actionId("schedule-modal-skip").text(plainText(pt -> pt.text("Skip Standups"))))
+                                                    button(b -> b.actionId("schedule-modal").text(plainText(pt -> pt.text("Schedule Standups"))))
+                                                   // button(b -> b.actionId("schedule-modal-skip").text(plainText(pt -> pt.text("Skip Standups"))))
                                             ))
                                     )))
                 );
@@ -77,18 +77,9 @@ public class Controller implements Subject {
         });
 
         app.blockAction("schedule-modal", (req, ctx) -> {
-            ViewsOpenResponse viewsOpenRes = ctx.client().viewsOpen(r -> {
-                try {
-                    return r
-                            .triggerId(ctx.getTriggerId())
-                            .view(view.buildScheduleView());
-                } catch (IOException e) {
-                    logger.error("{}", e);
-                } catch (SlackApiException e) {
-                    logger.error("{}", e);
-                }
-                return r;
-            });
+            ViewsOpenResponse viewsOpenRes = ctx.client().viewsOpen(r -> r
+                    .triggerId(ctx.getTriggerId())
+                    .view(view.buildScheduleView()));
             if (viewsOpenRes.isOk()) return ctx.ack();
             else return Response.builder().statusCode(500).body(viewsOpenRes.getError()).build();
         });
@@ -125,15 +116,43 @@ public class Controller implements Subject {
             Map<String, Map<String, ViewState.Value>> stateValues = req.getPayload().getView().getState().getValues();
             List<ViewState.SelectedOption> days = stateValues.get("days-block").get("select-days").getSelectedOptions();
 
+            System.out.println("TIME " + stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText());
+
+            System.out.println("TIME ZONE " + stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText());
+            String time = stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText();
+            String timeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText();
+            //String time = "10";
+            //String timeZone = "mount";
+           // System.out.println(time + " THIS IS TIME SELECTED ");
+           // System.out.println(timeZone + " THIS IS TIMEZONE SELECTED ") ;
+
+            ArrayList<String> selectedD = new ArrayList<>();
             ArrayList<String> selectedDays = new ArrayList<>();
+//            String time = new String();
+//            String timeZone = new String();
+
             for (ViewState.SelectedOption element : days) {
                 selectedDays.add(element.getValue());
-                System.out.println(element.getText().getText() + "!!!");
+                selectedD.add(element.getText().getText());
+               // System.out.println(element.getText().getText() + "!!!");
             }
 
+
+            var client = Slack.getInstance().methods();
+            var channelId = req.getPayload().getUser().getId();
+
             try {
-                controller.notifyObservers(selectedDays);
+                controller.notifyObservers(selectedDays, time, timeZone);
                 scheduler.schedule();
+
+                var result = client.chatPostMessage(r -> r
+                        // The token you used to initialize your app
+                        .token(SLACK_BOT_TOKEN)
+                        .channel(channelId)
+                        .blocks(asBlocks(
+                                section(section -> section.text(markdownText("You scheduled your standup for " + selectedD + "at " + time + timeZone))))));
+
+
             } catch (SchedulerException e) {
                 logger.error("error: {}",e);
             }

@@ -57,7 +57,7 @@ public class Views {
                         input(input -> input
                                 .label(plainText("Select days for standup"))
                                 .blockId("days-block")
-                                .element(checkboxes(i -> i
+                                .element(multiStaticSelect(i -> i
                                         .actionId("select-days")
                                         .options(Arrays.asList(
                                                 option(plainText("Monday"), "2"), // value represents cron job day of week value
@@ -72,12 +72,42 @@ public class Views {
                         input(input -> input
                                 .label(plainText("Select a time"))
                                 .blockId("time-block")
-                                .element(timePicker(t -> t
+                                .element(staticSelect(t -> t
+                                        .placeholder(plainText("Select time"))
                                         .actionId("select-time")
+                                        .options(Arrays.asList(
+                                                option(plainText("9:00 AM"), "2"), // value represents cron job day of week value
+                                                option(plainText("10:00 AM"), "3"),
+                                                option(plainText("11:00 AM"), "4"),
+                                                option(plainText("12:00 PM"), "5"),
+                                                option(plainText("1:00 PM"), "6"),
+                                                option(plainText("2:00 PM"), "7"),
+                                                option(plainText("3:00 PM"), "8"),
+                                                option(plainText("4:00 PM"), "9"),
+                                                option(plainText("5:00 PM"), "10"),
+                                                option(plainText("6:00 PM"), "11"),
+                                                option(plainText("7:00 PM"), "12"),
+                                                option(plainText("8:00 PM"), "13")
+
+                                        ))
+                                ))
+                        ),
+                        input(input -> input
+                                .label(plainText("Select a time zone"))
+                                .blockId("timezone-block")
+                                .element(staticSelect(t -> t
+                                        .placeholder(plainText("Select time zone"))
+                                        .actionId("select-timezone")
+                                        .options(Arrays.asList(
+                                                option(plainText("Pacific Time"), "2"), // value represents cron job day of week value
+                                                option(plainText("Mountain Time"), "3"),
+                                                option(plainText("Central Time"), "4"),
+                                                option(plainText("Eastern TIme"), "5")
+
                                 ))
                         )
                 ))
-        );
+        )));
     }
 
      public View buildStandupView() {
