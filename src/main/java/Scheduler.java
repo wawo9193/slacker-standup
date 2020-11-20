@@ -35,53 +35,52 @@ public class Scheduler implements Job, Observer {
 
     @Override
     public void execute(JobExecutionContext jec) throws JobExecutionException {
-
-        System.out.println("******");
+        System.out.println("*************");
         try {
             var user_result = client.usersList(r -> r
                     .token(SLACK_BOT_TOKEN)
             );
 
             // Call the chat.postMessage method using the built-in WebClient
-//            var post_result = client.chatPostMessage(r -> r
-//                    // The token you used to initialize your app
-//                    .token(SLACK_BOT_TOKEN)
-//                    .channel("D01DU5G7Z7H")
-//                    .text("Fill out your standup!")
-//                    .blocks(asBlocks(
-//                            section(section -> section.text(markdownText(":wave: Press the button to fill out standup!"))),
-//                            actions(actions -> actions
-//                                    .elements(asElements(
-//                                            button(b -> b.actionId("standup-modal").text(plainText(pt -> pt.text("Enter Standup")))),
-//                                            button(b -> b.actionId("standup-modal-skip").text(plainText(pt -> pt.text("Skip standup"))))
-//                                    ))
-//                            )))
-//            );
-//
-//            logger.info("result {}", post_result);
+            var post_result = client.chatPostMessage(r -> r
+                    // The token you used to initialize your app
+                    .token(SLACK_BOT_TOKEN)
+                    .channel("D01DU5G7Z7H")
+                    .text("Fill out your standup!")
+                    .blocks(asBlocks(
+                            section(section -> section.text(markdownText(":wave: Press the button to fill out standup!"))),
+                            actions(actions -> actions
+                                    .elements(asElements(
+                                            button(b -> b.actionId("standup-modal").text(plainText(pt -> pt.text("Enter Standup")))),
+                                            button(b -> b.actionId("standup-modal-skip").text(plainText(pt -> pt.text("Skip standup"))))
+                                    ))
+                            )))
+            );
 
-            for (User user : user_result.getMembers()) {
-                // Call the chat.postMessage method using the built-in WebClient
-                var post_result = client.chatPostMessage(r -> r
-                        // The token you used to initialize your app
-                        .token(SLACK_BOT_TOKEN)
-                        .channel(user.getId())
-                        .blocks(asBlocks(
-                                section(section -> section.text(markdownText(":wave: Press the button to schedule!"))),
-                                actions(actions -> actions
-                                        .elements(asElements(
-                                                button(b -> b.actionId("standup-modal").text(plainText(pt -> pt.text("Enter Standup")))),
-                                                button(b -> b.actionId("schedule-modal-skip").text(plainText(pt -> pt.text("Skip"))))
-                                        ))
-                                )))
-                );
-                // Print result, which includes information about the message (like TS)
-                logger.info("result {}", post_result);
-                // Store the entire user object (you may not need all of the info)
-//                usersStore.put(user.getId(), user);
+            logger.info("result {}", post_result);
+
+//            for (User user : user_result.getMembers()) {
+//                // Call the chat.postMessage method using the built-in WebClient
+//                var post_result = client.chatPostMessage(r -> r
+//                        // The token you used to initialize your app
+//                        .token(SLACK_BOT_TOKEN)
+//                        .channel(user.getId())
+//                        .blocks(asBlocks(
+//                                section(section -> section.text(markdownText(":wave: Press the button to schedule!"))),
+//                                actions(actions -> actions
+//                                        .elements(asElements(
+//                                                button(b -> b.actionId("standup-modal").text(plainText(pt -> pt.text("Enter Standup")))),
+//                                                button(b -> b.actionId("schedule-modal-skip").text(plainText(pt -> pt.text("Skip"))))
+//                                        ))
+//                                )))
+//                );
+//                // Print result, which includes information about the message (like TS)
+//                logger.info("result {}", post_result);
+//                // Store the entire user object (you may not need all of the info)
+////                usersStore.put(user.getId(), user);
 //                System.out.println("1: " + user.getId());
 //                System.out.println("2: " + user.getName());
-            }
+//            }
 
         } catch (IOException e) {
             logger.error("IO Exception: {}", e);
@@ -103,35 +102,34 @@ public class Scheduler implements Job, Observer {
         // sched.deleteJob(JobKey.jobKey("myJob", "group1"));
 
         // define the job and tie it to our myJob class
-//        JobDetail job = newJob(Scheduler.class)
-//                .withIdentity("myJob", "group1")
-//                .build();
-//
-//        // Trigger the job to run now
-//        Trigger trigger = TriggerBuilder.newTrigger()
-//                .withIdentity("myTrigger", "group1")
-//                .startNow()
-//                .build();
-//
-//        // Tell quartz to schedule the job using our trigger
-//        sched.scheduleJob(job, trigger);
+        JobDetail job = newJob(Scheduler.class)
+                .withIdentity("myJob", "group1")
+                .build();
 
+        // Trigger the job to run now
+        Trigger trigger = TriggerBuilder.newTrigger()
+                .withIdentity("myTrigger", "group1")
+                .startNow()
+                .build();
+
+        // Tell quartz to schedule the job using our trigger
+        sched.scheduleJob(job, trigger);
         // Trigger job to run when specified
-        for (String day : selectedDays) {
-            // define the job and tie it to our HelloJob class
-            JobDetail job = newJob(Scheduler.class)
-                    .withIdentity("myJob", "group" + day)
-                    .build();
-
-            // Trigger the job to run at 10am every day specified
-            Trigger trigger = TriggerBuilder.newTrigger()
-                    .withIdentity("myTrigger", "group" + day)
-                    .withSchedule(CronScheduleBuilder.cronSchedule("0 0 10 ? * " + day)
-                    .inTimeZone(TimeZone.getTimeZone("America/Denver")))
-                    .build();
-
-            // Tell quartz to schedule the job using our trigger
-            sched.scheduleJob(job, trigger);
-        }
+//        for (String day : selectedDays) {
+//            // define the job and tie it to our HelloJob class
+//            JobDetail job = newJob(Scheduler.class)
+//                    .withIdentity("myJob", "group" + day)
+//                    .build();
+//
+//            // Trigger the job to run at 10am every day specified
+//            Trigger trigger = TriggerBuilder.newTrigger()
+//                    .withIdentity("myTrigger", "group" + day)
+//                    .withSchedule(CronScheduleBuilder.cronSchedule("0 0 10 ? * " + day)
+//                    .inTimeZone(TimeZone.getTimeZone("America/Denver")))
+//                    .build();
+//
+//            // Tell quartz to schedule the job using our trigger
+//            sched.scheduleJob(job, trigger);
+//        }
     }
 }

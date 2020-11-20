@@ -24,7 +24,6 @@ public class Controller implements Subject {
 //    SLACK_SIGNING_SECRET="c4bc66b49a798ffc1a0d90d2f4a55a86";
     static final Logger logger = LoggerFactory.getLogger("slacker-standup");
     static final App app = new App();
-    static final Observer observer = new Scheduler();
     static final Scheduler scheduler = new Scheduler();
     static final Controller controller = new Controller();
     static final Views view = new Views();
@@ -36,7 +35,7 @@ public class Controller implements Subject {
     static final Integer PORT = Integer.valueOf(System.getenv("PORT"));
 
     public void notifyObservers(ArrayList<String> days){
-        observer.update(days);
+        scheduler.update(days);
     }
 
     public static void main(String[] args) throws Exception {
@@ -45,10 +44,10 @@ public class Controller implements Subject {
         config.setSigningSecret(SLACK_SIGNING_SECRET);
 
         app.command("/schedule", (req, ctx) -> {
-            String commandArgText = req.getPayload().getText();
+//            String commandArgText = req.getPayload().getText();
             String channelId = req.getPayload().getChannelId();
-            String channelName = req.getPayload().getChannelName();
-            String text = "You said " + commandArgText + " at <#" + channelId + "|" + channelName + ">";
+//            String channelName = req.getPayload().getChannelName();
+//            String text = "You said " + commandArgText + " at <#" + channelId + "|" + channelName + ">";
 
             var client = Slack.getInstance().methods();
 
@@ -74,13 +73,22 @@ public class Controller implements Subject {
                 logger.error("error: {}", e.getMessage(), e);
             }
 
-            return ctx.ack(text); // respond with 200 OK
+            return ctx.ack(); // respond with 200 OK
         });
 
         app.blockAction("schedule-modal", (req, ctx) -> {
-            ViewsOpenResponse viewsOpenRes = ctx.client().viewsOpen(r -> r
-                    .triggerId(ctx.getTriggerId())
-                    .view(view.buildScheduleView()));
+            ViewsOpenResponse viewsOpenRes = ctx.client().viewsOpen(r -> {
+                try {
+                    return r
+                            .triggerId(ctx.getTriggerId())
+                            .view(view.buildScheduleView());
+                } catch (IOException e) {
+                    logger.error("{}", e);
+                } catch (SlackApiException e) {
+                    logger.error("{}", e);
+                }
+                return r;
+            });
             if (viewsOpenRes.isOk()) return ctx.ack();
             else return Response.builder().statusCode(500).body(viewsOpenRes.getError()).build();
         });
@@ -120,6 +128,7 @@ public class Controller implements Subject {
             ArrayList<String> selectedDays = new ArrayList<>();
             for (ViewState.SelectedOption element : days) {
                 selectedDays.add(element.getValue());
+                System.out.println(element.getText().getText() + "!!!");
             }
 
             try {
@@ -155,7 +164,7 @@ public class Controller implements Subject {
         app.viewClosed("schedule-standups", (req, ctx) -> {
             MethodsClient client = Slack.getInstance().methods();
             String channelId = req.getPayload().getUser().getId();
-
+            System.out.println("AHHHHHHH");
             try {
                 // Call the chat.postMessage method using the built-in WebClient
                 ChatPostMessageResponse result = client.chatPostMessage(r -> r
