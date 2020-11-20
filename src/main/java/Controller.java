@@ -131,11 +131,11 @@ public class Controller implements Subject {
             Map<String, Map<String, ViewState.Value>> stateValues = req.getPayload().getView().getState().getValues();
             List<ViewState.SelectedOption> days = stateValues.get("days-block").get("select-days").getSelectedOptions();
 
-            System.out.println("TIME " + stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText());
+           // System.out.println("TIME " + stateValues.get("time-block").get("select-time").getSelectedOption().getValue());
 
-            System.out.println("TIME ZONE " + stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText());
-            String time = stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText();
-            String timeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText();
+            //System.out.println("TIME ZONE " + stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText());
+            String time = stateValues.get("time-block").get("select-time").getSelectedOption().getValue();
+            String timeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getValue();
 
             //String time = "10";
             //String timeZone = "mount";
@@ -170,7 +170,7 @@ public class Controller implements Subject {
                         .token(SLACK_BOT_TOKEN)
                         .channel(channelId)
                         .blocks(asBlocks(
-                                section(section -> section.text(markdownText("You scheduled your standup for " + selectedD + "at " + time + timeZone))))));
+                                section(section -> section.text(markdownText("You scheduled your standup for " + selectedD.toString() + " at " + stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText() + stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText()))))));
 
                 logger.info("result {}", result);
             }
