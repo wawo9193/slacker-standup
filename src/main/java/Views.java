@@ -3,6 +3,7 @@ import com.slack.api.bolt.AppConfig;
 import com.slack.api.bolt.jetty.SlackAppServer;
 import com.slack.api.bolt.response.Response;
 import com.slack.api.methods.response.views.ViewsOpenResponse;
+import com.slack.api.model.block.composition.OptionObject;
 import com.slack.api.model.view.View;
 import com.slack.api.model.view.ViewState;
 import java.io.IOException;
@@ -15,14 +16,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import static com.slack.api.model.block.Blocks.*;
+import java.util.stream.Collectors;
+import com.slack.api.model.block.element.*;
+
+import com.slack.api.model.Option;
 import static com.slack.api.model.block.composition.BlockCompositions.*;
 import static com.slack.api.model.block.element.BlockElements.*;
 import static com.slack.api.model.view.Views.*;
+import static com.slack.api.model.block.Blocks.*;
 
 public class Views {
 
-     public View buildScheduleView() {
+    public View buildScheduleView() {
+        var client = Slack.getInstance().methods();
+
         return view(view -> view
                 .callbackId("schedule-standups")
                 .type("modal")
@@ -32,7 +39,23 @@ public class Views {
                 .close(viewClose(close -> close.type("plain_text").text("Cancel").emoji(true)))
                 .blocks(asBlocks(
                         input(input -> input
-                                .label(plainText("Select days for standup:"))
+                                .label(plainText("Channel"))
+                                .blockId("channel-block")
+                                .element(channelsSelect(c -> c
+                                        .placeholder(plainText("Select option"))
+                                        .actionId("select-channel")
+                                ))
+                        ),
+                        input(input -> input
+                                .label(plainText("Users"))
+                                .blockId("user-block")
+                                .element(multiUsersSelect(u -> u
+                                        .placeholder(plainText("Select user"))
+                                        .actionId("select-user")
+                                ))
+                        ),
+                        input(input -> input
+                                .label(plainText("Select days for standup"))
                                 .blockId("days-block")
                                 .element(checkboxes(i -> i
                                         .actionId("select-days")
@@ -44,6 +67,13 @@ public class Views {
                                                 option(plainText("Friday"), "6")
                                         ))
 
+                                ))
+                        ),
+                        input(input -> input
+                                .label(plainText("Select a time"))
+                                .blockId("time-block")
+                                .element(timePicker(t -> t
+                                        .actionId("select-time")
                                 ))
                         )
                 ))
