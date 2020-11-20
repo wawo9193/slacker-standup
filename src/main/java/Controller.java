@@ -136,6 +136,7 @@ public class Controller implements Subject {
             System.out.println("TIME ZONE " + stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText());
             String time = stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText();
             String timeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText();
+
             //String time = "10";
             //String timeZone = "mount";
            // System.out.println(time + " THIS IS TIME SELECTED ");
@@ -171,8 +172,9 @@ public class Controller implements Subject {
                         .blocks(asBlocks(
                                 section(section -> section.text(markdownText("You scheduled your standup for " + selectedD + "at " + time + timeZone))))));
 
-
-            } catch (SchedulerException e) {
+                logger.info("result {}", result);
+            }
+            catch (SchedulerException e) {
                 logger.error("error: {}",e);
             }
             return ctx.ack();

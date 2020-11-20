@@ -76,18 +76,19 @@ public class Views {
                                         .placeholder(plainText("Select time"))
                                         .actionId("select-time")
                                         .options(Arrays.asList(
-                                                option(plainText("9:00 AM"), "2"), // value represents cron job day of week value
-                                                option(plainText("10:00 AM"), "3"),
-                                                option(plainText("11:00 AM"), "4"),
-                                                option(plainText("12:00 PM"), "5"),
-                                                option(plainText("1:00 PM"), "6"),
-                                                option(plainText("2:00 PM"), "7"),
-                                                option(plainText("3:00 PM"), "8"),
-                                                option(plainText("4:00 PM"), "9"),
-                                                option(plainText("5:00 PM"), "10"),
-                                                option(plainText("6:00 PM"), "11"),
-                                                option(plainText("7:00 PM"), "12"),
-                                                option(plainText("8:00 PM"), "13")
+                                                option(plainText("9:00 AM"), "0 0 9"), // value represents cron job day of week value
+                                                option(plainText("10:00 AM"), "0 0 10 "),
+                                                option(plainText("11:00 AM"), "0 0 11 "),
+                                                option(plainText("12:00 PM"), "0 0 12 "),
+                                                option(plainText("1:00 PM"), "0 0 13 "),
+                                                option(plainText("2:00 PM"), "0 0 14 "),
+                                                option(plainText("2:33 PM"), "0 33 14 "),
+                                                option(plainText("3:00 PM"), "0 0 15 "),
+                                                option(plainText("4:00 PM"), "0 0 16 "),
+                                                option(plainText("5:00 PM"), "0 0 17 "),
+                                                option(plainText("6:00 PM"), "0 0 18 "),
+                                                option(plainText("7:00 PM"), "0 0 19 "),
+                                                option(plainText("8:00 PM"), "0 0 20 ")
 
                                         ))
                                 ))
@@ -100,7 +101,7 @@ public class Views {
                                         .actionId("select-timezone")
                                         .options(Arrays.asList(
                                                 option(plainText("Pacific Time"), "2"), // value represents cron job day of week value
-                                                option(plainText("Mountain Time"), "3"),
+                                                option(plainText("Mountain Time"), "America/Denver"),
                                                 option(plainText("Central Time"), "4"),
                                                 option(plainText("Eastern TIme"), "5")
 
