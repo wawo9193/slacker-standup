@@ -51,7 +51,7 @@ public class Scheduler implements Job, Observer {
             var post_result = client.chatPostMessage(r -> r
                     // The token you used to initialize your app
                     .token(SLACK_BOT_TOKEN)
-                    .channel("D01DU5G7Z7H")
+                    .channel("D01E8T8L6DQ")
                     .text("Fill out your standup!")
                     .blocks(asBlocks(
                             section(section -> section.text(markdownText(":wave: Press the button to fill out standup!"))),
@@ -126,7 +126,7 @@ public class Scheduler implements Job, Observer {
             JobDetail job = newJob(Scheduler.class)
                     .withIdentity("myJob", "group" + day)
                     .build();
-
+            System.out.println(selectedTime + "THIS IS TIMEEEEEEEEE " + selectedTimeZone + " AND THIS IS TIME ZONE ");
             // Trigger the job to run at 10am every day specified
             Trigger trigger = TriggerBuilder.newTrigger()
                     .withIdentity("myTrigger", "group" + day)
