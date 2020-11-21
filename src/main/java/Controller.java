@@ -131,10 +131,10 @@ public class Controller implements Subject {
         app.viewSubmission("schedule-standups", (req, ctx) -> {
             Map<String, Map<String, ViewState.Value>> stateValues = req.getPayload().getView().getState().getValues();
             List<ViewState.SelectedOption> days = stateValues.get("days-block").get("select-days").getSelectedOptions();
-            String time = stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText();
-            String timeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText();
             ArrayList<String> users = (ArrayList<String>) stateValues.get("user-block").get("select-user").getSelectedUsers();
             String slackChannelId = stateValues.get("channel-block").get("select-channel").getSelectedChannel();
+            String time = stateValues.get("time-block").get("select-time").getSelectedOption().getValue();
+            String timeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getValue();
 
             ArrayList<String> selectedD = new ArrayList<>();
             ArrayList<String> selectedDays = new ArrayList<>();
@@ -158,9 +158,7 @@ public class Controller implements Subject {
                         .token(SLACK_BOT_TOKEN)
                         .channel(SLACK_CHANNEL_ID)
                         .blocks(asBlocks(
-                                section(section -> section
-                                        .text(markdownText("You scheduled your standup for " + selectedD + "at " + time + timeZone))
-                                )
+                                section(section -> section.text(markdownText("You scheduled your standup for " + selectedD.toString() + " at " + stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText() + stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText())))
                         ))
                 );
 

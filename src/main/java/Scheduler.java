@@ -130,7 +130,7 @@ public class Scheduler implements Job, Observer {
 //            JobDetail job = newJob(Scheduler.class)
 //                    .withIdentity("myJob", "group" + day)
 //                    .build();
-//
+//            System.out.println(selectedTime + "THIS IS TIMEEEEEEEEE " + selectedTimeZone + " AND THIS IS TIME ZONE ");
 //            // Trigger the job to run at 10am every day specified
 //            Trigger trigger = TriggerBuilder.newTrigger()
 //                    .withIdentity("myTrigger", "group" + day)
@@ -141,7 +141,6 @@ public class Scheduler implements Job, Observer {
 //            // Tell quartz to schedule the job using our trigger
 //            sched.scheduleJob(job, trigger);
 //         }
-
     }
 }
 
