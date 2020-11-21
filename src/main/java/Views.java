@@ -1,25 +1,6 @@
-import com.slack.api.bolt.App;
-import com.slack.api.bolt.AppConfig;
-import com.slack.api.bolt.jetty.SlackAppServer;
-import com.slack.api.bolt.response.Response;
-import com.slack.api.methods.response.views.ViewsOpenResponse;
-import com.slack.api.model.block.composition.OptionObject;
 import com.slack.api.model.view.View;
-import com.slack.api.model.view.ViewState;
-import java.io.IOException;
 import com.slack.api.Slack;
-import com.slack.api.methods.SlackApiException;
-import org.quartz.SchedulerException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import com.slack.api.model.block.element.*;
-
-import com.slack.api.model.Option;
 import static com.slack.api.model.block.composition.BlockCompositions.*;
 import static com.slack.api.model.block.element.BlockElements.*;
 import static com.slack.api.model.view.Views.*;
@@ -28,8 +9,6 @@ import static com.slack.api.model.block.Blocks.*;
 public class Views {
 
     public View buildScheduleView() {
-        var client = Slack.getInstance().methods();
-
         return view(view -> view
                 .callbackId("schedule-standups")
                 .type("modal")
