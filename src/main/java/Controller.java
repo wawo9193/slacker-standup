@@ -40,15 +40,16 @@ public class Controller implements Subject {
     static final Scheduler scheduler = new Scheduler();
     static final Controller controller = new Controller();
     static final Views view = new Views();
+    static String SLACK_CHANNEL_ID = "";
 
     // Env variables
     static final String SLACK_BOT_TOKEN = System.getenv("SLACK_BOT_TOKEN");
     static final String SLACK_SIGNING_SECRET = System.getenv("SLACK_SIGNING_SECRET");
-    static final String SLACK_CHANNEL_ID = System.getenv("SLACK_CHANNEL_ID");
     static final Integer PORT = Integer.valueOf(System.getenv("PORT"));
 
-    public void notifyObservers(ArrayList<String> days, String times, String timeZone){
-        scheduler.update(days, times, timeZone);
+    public void notifyObservers(ArrayList<String> days, ArrayList<String> users, String times, String timeZone){
+        System.out.println("2: " + users);
+        scheduler.update(days, users, times, timeZone);
     }
 
     public static void main(String[] args) throws Exception {
@@ -130,47 +131,40 @@ public class Controller implements Subject {
         app.viewSubmission("schedule-standups", (req, ctx) -> {
             Map<String, Map<String, ViewState.Value>> stateValues = req.getPayload().getView().getState().getValues();
             List<ViewState.SelectedOption> days = stateValues.get("days-block").get("select-days").getSelectedOptions();
-
-            System.out.println("TIME " + stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText());
-
-            System.out.println("TIME ZONE " + stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText());
             String time = stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText();
             String timeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText();
-            //String time = "10";
-            //String timeZone = "mount";
-           // System.out.println(time + " THIS IS TIME SELECTED ");
-           // System.out.println(timeZone + " THIS IS TIMEZONE SELECTED ") ;
+            ArrayList<String> users = (ArrayList<String>) stateValues.get("user-block").get("select-user").getSelectedUsers();
+            String slackChannelId = stateValues.get("channel-block").get("select-channel").getSelectedChannel();
 
             ArrayList<String> selectedD = new ArrayList<>();
-
-            List<String> users = stateValues.get("user-block").get("select-user").getSelectedUsers();
-            String channel = stateValues.get("channel-block").get("select-channel").getSelectedChannel();
-
             ArrayList<String> selectedDays = new ArrayList<>();
-//            String time = new String();
-//            String timeZone = new String();
 
             for (ViewState.SelectedOption element : days) {
                 selectedDays.add(element.getValue());
                 selectedD.add(element.getText().getText());
-               // System.out.println(element.getText().getText() + "!!!");
             }
 
-
             var client = Slack.getInstance().methods();
-            var channelId = req.getPayload().getUser().getId();
-
+//            var channelId = req.getPayload().getUser().getId();
+            System.out.println("1: " + users);
             try {
-                controller.notifyObservers(selectedDays, time, timeZone);
+                SLACK_CHANNEL_ID = slackChannelId;
+
+                controller.notifyObservers(selectedDays, users, time, timeZone);
                 scheduler.schedule();
 
                 var result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
                         .token(SLACK_BOT_TOKEN)
-                        .channel(channelId)
+                        .channel(SLACK_CHANNEL_ID)
                         .blocks(asBlocks(
-                                section(section -> section.text(markdownText("You scheduled your standup for " + selectedD + "at " + time + timeZone))))));
+                                section(section -> section
+                                        .text(markdownText("You scheduled your standup for " + selectedD + "at " + time + timeZone))
+                                )
+                        ))
+                );
 
+                logger.info("result: {}", result);
 
             } catch (SchedulerException e) {
                 logger.error("error: {}",e);
