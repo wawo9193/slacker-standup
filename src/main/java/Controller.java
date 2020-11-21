@@ -165,7 +165,6 @@ public class Controller implements Subject {
                 );
 
                 logger.info("result: {}", result);
-
             } catch (SchedulerException e) {
                 logger.error("error: {}",e);
             }
