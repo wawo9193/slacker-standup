@@ -31,12 +31,10 @@ public class Scheduler implements Job, Observer {
     static final String SLACK_BOT_TOKEN = System.getenv("SLACK_BOT_TOKEN");
 
     public void update(ArrayList<String> selectedDays, ArrayList<String> users, String selectedTime, String selectedTimeZone) {
-        System.out.println("3: " + users);
         this.selectedDays = selectedDays;
         this.users = users;
         this.selectedTime = selectedTime;
         this.selectedTimeZone = selectedTimeZone;
-        System.out.println("4: " + this.users);
     }
 
     public Scheduler() {
@@ -98,9 +96,7 @@ public class Scheduler implements Job, Observer {
 
     public void schedule() throws SchedulerException {
         SchedulerFactory schedFact = new StdSchedulerFactory();
-
         org.quartz.Scheduler sched = schedFact.getScheduler();
-
         sched.start();
 
         // Delete the job with the trigger
@@ -130,7 +126,6 @@ public class Scheduler implements Job, Observer {
 //            JobDetail job = newJob(Scheduler.class)
 //                    .withIdentity("myJob", "group" + day)
 //                    .build();
-//            System.out.println(selectedTime + "THIS IS TIMEEEEEEEEE " + selectedTimeZone + " AND THIS IS TIME ZONE ");
 //            // Trigger the job to run at 10am every day specified
 //            Trigger trigger = TriggerBuilder.newTrigger()
 //                    .withIdentity("myTrigger", "group" + day)

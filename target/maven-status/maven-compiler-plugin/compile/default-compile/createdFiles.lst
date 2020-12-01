@@ -1,5 +1,6 @@
-Views.class
 Observer.class
+Scheduler.class
+Views.class
+Res.class
 Subject.class
 Controller.class
-Scheduler.class
