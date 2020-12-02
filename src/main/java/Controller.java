@@ -46,6 +46,7 @@ public class Controller implements Subject {
     static final String SLACK_SIGNING_SECRET = System.getenv("SLACK_SIGNING_SECRET");
     static final Integer PORT = Integer.valueOf(System.getenv("PORT"));
 
+    // Observer pattern
     public void notifyObservers(ArrayList<String> days, ArrayList<String> users, String times, String timeZone){
         scheduler.update(days, users, times, timeZone);
     }
@@ -84,7 +85,8 @@ public class Controller implements Subject {
                 }
             };
 
-            // to overcome the 3 second operation timeout message, multiple threads are deployed for
+            // to overcome the 3 second operation timeout message, multiple threads are deployed to return 200 response
+            // and submit message to channel
             ExecutorService executor = Executors.newCachedThreadPool();
             executor.submit(r);
             executor.shutdown();
@@ -132,7 +134,7 @@ public class Controller implements Subject {
             Map<String, Map<String, ViewState.Value>> stateValues = req.getPayload().getView().getState().getValues();
             List<ViewState.SelectedOption> days = stateValues.get("days-block").get("select-days").getSelectedOptions();
             ArrayList<String> users = (ArrayList<String>) stateValues.get("user-block").get("select-user").getSelectedUsers();
-            String time = stateValues.get("time-block").get("select-time").getSelectedOption().getValue();
+            String cronTime = stateValues.get("time-block").get("select-time").getSelectedOption().getValue();
             String timeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getValue();
             String userId = req.getPayload().getUser().getId();
             ArrayList<String> selectedD = new ArrayList<>();
@@ -148,14 +150,14 @@ public class Controller implements Subject {
 
             try {
 
-                controller.notifyObservers(selectedDays, users, time, timeZone);
+                controller.notifyObservers(selectedDays, users, cronTime, timeZone);
                 scheduler.schedule();
 
                 var result = client.chatPostMessage(r -> r
                         .token(SLACK_BOT_TOKEN)
                         .channel(userId)
                         .blocks(asBlocks(
-                                section(section -> section.text(markdownText("You scheduled your standup for " + selectedD.toString() + " at " + time + timeZone)))
+                                section(section -> section.text(markdownText("You scheduled your standup for " + selectedD.toString() + " at " + timeZone)))
                         ))
                 );
 
