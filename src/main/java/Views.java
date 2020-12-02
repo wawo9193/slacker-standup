@@ -6,8 +6,11 @@ import static com.slack.api.model.block.element.BlockElements.*;
 import static com.slack.api.model.view.Views.*;
 import static com.slack.api.model.block.Blocks.*;
 
+ /* the view is the part of MVC pattern. The view outputs the changes that are correspond to users changes throught the controller
+ * when the user do changes they are past into the controller and it trigers a call back according to the call back id of a view
+ */
 public class Views {
-
+    // view of the scheduling of a standup where user can pick the channel, the users, days of a standup, times and the time zone
     public View buildScheduleView() {
         return view(view -> view
                 .callbackId("schedule-standups")
@@ -89,6 +92,9 @@ public class Views {
         )));
     }
 
+     /* this is the view for a standup questionnaire
+     * this includes 3 main components of the standup where users inserts their answers and submit the standup
+     */
      public View buildStandupView() {
         return view(view -> view
                 .callbackId("submission-standups")
