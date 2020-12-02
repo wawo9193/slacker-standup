@@ -31,6 +31,10 @@ public class Scheduler implements Job, Observer {
     final String SLACK_BOT_TOKEN = System.getenv("SLACK_BOT_TOKEN");
 
     public void update(ArrayList<String> selectedDays, ArrayList<String> users, String selectedTime, String selectedTimeZone) {
+        /*
+        * Functionality: part of the pub/sub pattern used, as this scheduler is a subscriber of
+        * changes submitted to the controller
+        */
         this.selectedDays = selectedDays;
         this.users = users;
         this.selectedTime = selectedTime;
@@ -46,30 +50,15 @@ public class Scheduler implements Job, Observer {
 
     @Override
     public void execute(JobExecutionContext jec) throws JobExecutionException {
+        /*
+        * This is the job that is executed when scheduled to by the 'schedule()' function,
+        * which sends all participants stand-ups.
+        */
         try {
             JobDataMap data = jec.getMergedJobDataMap();
             ArrayList<String> jobUsers = (ArrayList<String>) data.get(DATA_ARRAY_KEY);
-            // Call the chat.postMessage method using the built-in WebClient
-//            var post_result = client.chatPostMessage(r -> r
-//                    // The token you used to initialize your app
-//                    .token(SLACK_BOT_TOKEN)
-//                    .channel("D01DU5G7Z7H")
-//                    .text("Fill out your standup!")
-//                    .blocks(asBlocks(
-//                            section(section -> section.text(markdownText(":wave: Press the button to fill out standup!"))),
-//                            actions(actions -> actions
-//                                    .elements(asElements(
-//                                            button(b -> b.actionId("standup-modal").text(plainText(pt -> pt.text("Enter Standup")))),
-//                                            button(b -> b.actionId("standup-modal-skip").text(plainText(pt -> pt.text("Skip standup"))))
-//                                    ))
-//                            )))
-//            );
-//
-//            logger.info("result {}", post_result);
             for (String userId : jobUsers) {
-                // Call the chat.postMessage method using the built-in WebClient
                 var post_result = client.chatPostMessage(r -> r
-                        // The token you used to initialize your app
                         .token(SLACK_BOT_TOKEN)
                         .channel(userId)
                         .blocks(asBlocks(
@@ -81,7 +70,6 @@ public class Scheduler implements Job, Observer {
                                         ))
                                 )))
                 );
-                // Print result, which includes information about the message (like TS)
                 logger.info("result {}", post_result);
             }
 
@@ -94,10 +82,13 @@ public class Scheduler implements Job, Observer {
     }
 
     public void schedule() throws SchedulerException {
+        /*
+        * This schedules the job (sending out stand-up options to participants)
+        * by using the Quartz' cron expression scheduler.
+        */
+
         SchedulerFactory schedFact = new StdSchedulerFactory();
-
         org.quartz.Scheduler sched = schedFact.getScheduler();
-
         sched.start();
 
         // define the job and tie it to our myJob class
@@ -138,3 +129,10 @@ public class Scheduler implements Job, Observer {
 }
 
 // https://stackoverflow.com/a/23148027/10783453 // for passing array as job parameter
+// https://stackoverflow.com/a/12551542/10783453 // for multithreading to avoid operation timeout in slack api
+// https://api.slack.com/start/building/bolt-java // for understanding slack's java bolt framework
+// https://api.slack.com/reference/block-kit/block-elements#multi_select  // to understand block elements/actions in slack
+// https://api.slack.com/surfaces/modals/using // to use modals from the slack api in bolt framework
+// https://www.baeldung.com // for looking at quartz examples, but also many other java implemented ideas
+// http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html // for understanding cron expressions
+// http://www.quartz-scheduler.org/documentation/2.4.0-SNAPSHOT/tutorials/index.html // understanding quartz job scheduler/executor
