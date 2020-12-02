@@ -26,17 +26,15 @@ public class Scheduler implements Job, Observer {
     private String selectedTimeZone;
     private final Logger logger = LoggerFactory.getLogger("slacker-standup");
     private final MethodsClient client = Slack.getInstance().methods();
-    static final String DATA_ARRAY_KEY = "users";
 
-    static final String SLACK_BOT_TOKEN = System.getenv("SLACK_BOT_TOKEN");
+    static final String DATA_ARRAY_KEY = "users";
+    final String SLACK_BOT_TOKEN = System.getenv("SLACK_BOT_TOKEN");
 
     public void update(ArrayList<String> selectedDays, ArrayList<String> users, String selectedTime, String selectedTimeZone) {
-        System.out.println("3: " + users);
         this.selectedDays = selectedDays;
         this.users = users;
         this.selectedTime = selectedTime;
         this.selectedTimeZone = selectedTimeZone;
-        System.out.println("4: " + this.users);
     }
 
     public Scheduler() {
@@ -48,7 +46,6 @@ public class Scheduler implements Job, Observer {
 
     @Override
     public void execute(JobExecutionContext jec) throws JobExecutionException {
-        System.out.println("*************");
         try {
             JobDataMap data = jec.getMergedJobDataMap();
             ArrayList<String> jobUsers = (ArrayList<String>) data.get(DATA_ARRAY_KEY);
@@ -103,10 +100,6 @@ public class Scheduler implements Job, Observer {
 
         sched.start();
 
-        // Delete the job with the trigger
-        // sched.interrupt("myJob");
-        // sched.deleteJob(JobKey.jobKey("myJob", "group1"));
-
         // define the job and tie it to our myJob class
         JobDetail job = newJob(Scheduler.class)
                 .withIdentity("myJob", "group1")
@@ -130,8 +123,8 @@ public class Scheduler implements Job, Observer {
 //            JobDetail job = newJob(Scheduler.class)
 //                    .withIdentity("myJob", "group" + day)
 //                    .build();
-//            System.out.println(selectedTime + "THIS IS TIMEEEEEEEEE " + selectedTimeZone + " AND THIS IS TIME ZONE ");
-//            // Trigger the job to run at 10am every day specified
+
+//            // Trigger the job to run at specified selected time at selected day for selected time zone
 //            Trigger trigger = TriggerBuilder.newTrigger()
 //                    .withIdentity("myTrigger", "group" + day)
 //                    .withSchedule(CronScheduleBuilder.cronSchedule(selectedTime + day)

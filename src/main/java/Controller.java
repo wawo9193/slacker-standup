@@ -36,7 +36,6 @@ import static com.slack.api.model.block.element.BlockElements.*;
 
 public class Controller implements Subject {
     static final Logger logger = LoggerFactory.getLogger("slacker-standup");
-    static final App app = new App();
     static final Scheduler scheduler = new Scheduler();
     static final Controller controller = new Controller();
     static final Views view = new Views();
@@ -48,7 +47,6 @@ public class Controller implements Subject {
     static final Integer PORT = Integer.valueOf(System.getenv("PORT"));
 
     public void notifyObservers(ArrayList<String> days, ArrayList<String> users, String times, String timeZone){
-        System.out.println("2: " + users);
         scheduler.update(days, users, times, timeZone);
     }
 
@@ -56,6 +54,7 @@ public class Controller implements Subject {
         AppConfig config = new AppConfig();
         config.setSingleTeamBotToken(SLACK_BOT_TOKEN);
         config.setSigningSecret(SLACK_SIGNING_SECRET);
+        App app = new App(config);
 
         app.command("/schedule", (req, ctx) -> {
             String channelId = req.getPayload().getChannelId();
@@ -85,6 +84,7 @@ public class Controller implements Subject {
                 }
             };
 
+            // to overcome the 3 second operation timeout message, multiple threads are deployed for
             ExecutorService executor = Executors.newCachedThreadPool();
             executor.submit(r);
             executor.shutdown();
@@ -132,12 +132,12 @@ public class Controller implements Subject {
             Map<String, Map<String, ViewState.Value>> stateValues = req.getPayload().getView().getState().getValues();
             List<ViewState.SelectedOption> days = stateValues.get("days-block").get("select-days").getSelectedOptions();
             ArrayList<String> users = (ArrayList<String>) stateValues.get("user-block").get("select-user").getSelectedUsers();
-            String slackChannelId = stateValues.get("channel-block").get("select-channel").getSelectedChannel();
             String time = stateValues.get("time-block").get("select-time").getSelectedOption().getValue();
             String timeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getValue();
-
+            String userId = req.getPayload().getUser().getId();
             ArrayList<String> selectedD = new ArrayList<>();
             ArrayList<String> selectedDays = new ArrayList<>();
+            SLACK_CHANNEL_ID = stateValues.get("channel-block").get("select-channel").getSelectedChannel();
 
             for (ViewState.SelectedOption element : days) {
                 selectedDays.add(element.getValue());
@@ -145,20 +145,17 @@ public class Controller implements Subject {
             }
 
             var client = Slack.getInstance().methods();
-//            var channelId = req.getPayload().getUser().getId();
-            System.out.println("1: " + users);
+
             try {
-                SLACK_CHANNEL_ID = slackChannelId;
 
                 controller.notifyObservers(selectedDays, users, time, timeZone);
                 scheduler.schedule();
 
                 var result = client.chatPostMessage(r -> r
-                        // The token you used to initialize your app
                         .token(SLACK_BOT_TOKEN)
-                        .channel(SLACK_CHANNEL_ID)
+                        .channel(userId)
                         .blocks(asBlocks(
-                                section(section -> section.text(markdownText("You scheduled your standup for " + selectedD.toString() + " at " + stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText() + stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText())))
+                                section(section -> section.text(markdownText("You scheduled your standup for " + selectedD.toString() + " at " + time + timeZone)))
                         ))
                 );
 
@@ -178,7 +175,7 @@ public class Controller implements Subject {
                 var result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
                         .token(SLACK_BOT_TOKEN)
-                        .channel(channelId)
+                        .channel(SLACK_CHANNEL_ID)
                         .text("You cancelled your standup :unamused:")
                 );
                 // Print result, which includes information about the message (like TS)
@@ -239,6 +236,7 @@ public class Controller implements Subject {
                                 section(section -> section.text(markdownText(inp3 + "\n")))
                         ))
                 );
+
                 // Print response
                 logger.info("response: {}", response);
             } catch (IOException | SlackApiException e) {
@@ -248,7 +246,7 @@ public class Controller implements Subject {
         });
 
         logger.info("RUNNING NOW ON : " + PORT);
-        var slack_server = new SlackAppServer(app, PORT);
-        slack_server.start();
+        var server = new SlackAppServer(app, PORT);
+        server.start();
     }
 }
