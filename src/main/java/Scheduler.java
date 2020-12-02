@@ -30,6 +30,7 @@ public class Scheduler implements Job, Observer {
     static final String DATA_ARRAY_KEY = "users";
     final String SLACK_BOT_TOKEN = System.getenv("SLACK_BOT_TOKEN");
 
+    //
     public void update(ArrayList<String> selectedDays, ArrayList<String> users, String selectedTime, String selectedTimeZone) {
         /*
         * Functionality: part of the pub/sub pattern used, as this scheduler is a subscriber of
@@ -48,6 +49,7 @@ public class Scheduler implements Job, Observer {
         selectedTimeZone = new String();
     }
 
+    // Here is the job to be executed at specified time by Quartz scheduler
     @Override
     public void execute(JobExecutionContext jec) throws JobExecutionException {
         /*
@@ -91,6 +93,7 @@ public class Scheduler implements Job, Observer {
         org.quartz.Scheduler sched = schedFact.getScheduler();
         sched.start();
 
+        // ******************* THIS IS FOR DEMO PURPOSES, AUTOMATIC SEND-OUT ********************
         // define the job and tie it to our myJob class
         JobDetail job = newJob(Scheduler.class)
                 .withIdentity("myJob", "group1")
@@ -108,6 +111,7 @@ public class Scheduler implements Job, Observer {
         // Tell quartz to schedule the job using our trigger
         sched.scheduleJob(job, trigger);
 
+        // ******************* THIS IS TO SEND OUT AT SPECIFIED TIME/TIMEZONE/DAY ********************
         // Trigger job to run when specified
 //        for (String day : selectedDays) {
 //            // define the job and tie it to our HelloJob class
