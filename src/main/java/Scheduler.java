@@ -131,12 +131,3 @@ public class Scheduler implements Job, Observer {
 //         }
     }
 }
-
-// https://stackoverflow.com/a/23148027/10783453 // for passing array as job parameter
-// https://stackoverflow.com/a/12551542/10783453 // for multithreading to avoid operation timeout in slack api
-// https://api.slack.com/start/building/bolt-java // for understanding slack's java bolt framework
-// https://api.slack.com/reference/block-kit/block-elements#multi_select  // to understand block elements/actions in slack
-// https://api.slack.com/surfaces/modals/using // to use modals from the slack api in bolt framework
-// https://www.baeldung.com // for looking at quartz examples, but also many other java implemented ideas
-// http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html // for understanding cron expressions
-// http://www.quartz-scheduler.org/documentation/2.4.0-SNAPSHOT/tutorials/index.html // understanding quartz job scheduler/executor
