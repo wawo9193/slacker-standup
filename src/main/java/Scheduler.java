@@ -30,6 +30,7 @@ public class Scheduler implements Job, Observer {
     static final String DATA_ARRAY_KEY = "users";
     final String SLACK_BOT_TOKEN = System.getenv("SLACK_BOT_TOKEN");
 
+    //
     public void update(ArrayList<String> selectedDays, ArrayList<String> users, String selectedTime, String selectedTimeZone) {
         this.selectedDays = selectedDays;
         this.users = users;
@@ -44,28 +45,14 @@ public class Scheduler implements Job, Observer {
         selectedTimeZone = new String();
     }
 
+    // Here is the job to be executed at specified time by Quartz scheduler
     @Override
     public void execute(JobExecutionContext jec) throws JobExecutionException {
         try {
             JobDataMap data = jec.getMergedJobDataMap();
             ArrayList<String> jobUsers = (ArrayList<String>) data.get(DATA_ARRAY_KEY);
+
             // Call the chat.postMessage method using the built-in WebClient
-//            var post_result = client.chatPostMessage(r -> r
-//                    // The token you used to initialize your app
-//                    .token(SLACK_BOT_TOKEN)
-//                    .channel("D01DU5G7Z7H")
-//                    .text("Fill out your standup!")
-//                    .blocks(asBlocks(
-//                            section(section -> section.text(markdownText(":wave: Press the button to fill out standup!"))),
-//                            actions(actions -> actions
-//                                    .elements(asElements(
-//                                            button(b -> b.actionId("standup-modal").text(plainText(pt -> pt.text("Enter Standup")))),
-//                                            button(b -> b.actionId("standup-modal-skip").text(plainText(pt -> pt.text("Skip standup"))))
-//                                    ))
-//                            )))
-//            );
-//
-//            logger.info("result {}", post_result);
             for (String userId : jobUsers) {
                 // Call the chat.postMessage method using the built-in WebClient
                 var post_result = client.chatPostMessage(r -> r
@@ -100,6 +87,7 @@ public class Scheduler implements Job, Observer {
 
         sched.start();
 
+        // ******************* THIS IS FOR DEMO PURPOSES, AUTOMATIC SEND-OUT ********************
         // define the job and tie it to our myJob class
         JobDetail job = newJob(Scheduler.class)
                 .withIdentity("myJob", "group1")
@@ -117,6 +105,7 @@ public class Scheduler implements Job, Observer {
         // Tell quartz to schedule the job using our trigger
         sched.scheduleJob(job, trigger);
 
+        // ******************* THIS IS TO SEND OUT AT SPECIFIED TIME/TIMEZONE/DAY ********************
         // Trigger job to run when specified
 //        for (String day : selectedDays) {
 //            // define the job and tie it to our HelloJob class
