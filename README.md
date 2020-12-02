@@ -9,11 +9,14 @@
 virtual standup meetings through the Slack API
 
 ## To build/run
-**Note:** this requires having heroku and a slack app setup. The slack app setup can be referenced at the [Slack API docs](https://api.slack.com/start)
+**Note:** this requires having heroku and a slack app setup. The slack app setup can be referenced at: [Slack API docs](https://api.slack.com/start)
 * clone repo
-* setup necessary environment variables in Heroku config using `heroku config:set <VAR_NAME>=<value>`
-* build/compile using `mvn clean compile assembly:single`
-* deploy to Heroku using `deploy:jar target/<your-pom.xml-artifact-id>-1.0-SNAPSHOT-jar-with-dependencies.jar --app <your-heroku-app-name>`
+* setup necessary environment variables in Heroku config using 
+    ```heroku config:set <VAR_NAME>=<value>```
+* build/compile using 
+    ```mvn clean compile assembly:single```
+* deploy to Heroku using 
+    ```deploy:jar target/<your-pom.xml-artifact-id>-1.0-SNAPSHOT-jar-with-dependencies.jar --app <your-heroku-app-name>```
 * refer to procfile on Heroku web command to run the jar file created.
 
 
