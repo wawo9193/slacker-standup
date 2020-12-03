@@ -63,6 +63,7 @@ public class Scheduler implements Job, Observer {
                 var post_result = client.chatPostMessage(r -> r
                         .token(SLACK_BOT_TOKEN)
                         .channel(userId)
+                        .text("Stand-up reminder")
                         .blocks(asBlocks(
                                 section(section -> section.text(markdownText(":wave: Press the button to schedule!"))),
                                 actions(actions -> actions
