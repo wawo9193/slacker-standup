@@ -68,7 +68,7 @@ public class Scheduler implements Job, Observer {
                                 actions(actions -> actions
                                         .elements(asElements(
                                                 button(b -> b.actionId("standup-modal").text(plainText(pt -> pt.text("Enter Standup")))),
-                                                button(b -> b.actionId("schedule-modal-skip").text(plainText(pt -> pt.text("Skip"))))
+                                                button(b -> b.actionId("standup-modal-skip").text(plainText(pt -> pt.text("Skip"))))
                                         ))
                                 )))
                 );
