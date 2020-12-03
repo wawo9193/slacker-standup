@@ -84,7 +84,7 @@ public class Views {
                                                 option(plainText("Pacific Time"), "America/Los_Angeles"), // value represents cron job day of week value
                                                 option(plainText("Mountain Time"), "America/Denver"),
                                                 option(plainText("Central Time"), "America/Indiana/Indianapolis"),
-                                                option(plainText("Eastern TIme"), "America/New_York")
+                                                option(plainText("Eastern Time"), "America/New_York")
 
                                 ))
                         )

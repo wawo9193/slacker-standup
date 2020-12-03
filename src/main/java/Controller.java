@@ -144,7 +144,9 @@ public class Controller implements Subject {
             List<ViewState.SelectedOption> days = stateValues.get("days-block").get("select-days").getSelectedOptions();
             ArrayList<String> users = (ArrayList<String>) stateValues.get("user-block").get("select-user").getSelectedUsers();
             String cronTime = stateValues.get("time-block").get("select-time").getSelectedOption().getValue();
-            String timeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getValue();
+            String time = stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText();
+            String timeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText();
+            String quartzTimeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getValue();
             String userId = req.getPayload().getUser().getId();
             ArrayList<String> selectedD = new ArrayList<>();
             ArrayList<String> selectedDays = new ArrayList<>();
@@ -156,7 +158,7 @@ public class Controller implements Subject {
             }
 
             try {
-                controller.notifyObservers(selectedDays, users, cronTime, timeZone);
+                controller.notifyObservers(selectedDays, users, cronTime, quartzTimeZone);
                 scheduler.schedule();
 
                 MethodsClient client = Slack.getInstance().methods();
@@ -164,7 +166,7 @@ public class Controller implements Subject {
                         .token(SLACK_BOT_TOKEN)
                         .channel(userId)
                         .blocks(asBlocks(
-                                section(section -> section.text(markdownText("You scheduled your standup for " + selectedD.toString() + " at " + timeZone)))
+                                section(section -> section.text(markdownText("You scheduled your standup for " + selectedD.toString() + " at " + time + " " + timeZone)))
                         ))
                 );
                 logger.info("result: {}", result);
