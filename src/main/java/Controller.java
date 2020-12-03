@@ -76,7 +76,9 @@ public class Controller implements Subject {
     static final Controller controller = new Controller();
     static final Views view = new Views();
     static String SLACK_CHANNEL_ID = "";
-
+    //   SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SLACK_REDIRECT_URI, SLACK_SCOPES,
+    //   SLACK_INSTALL_PATH, SLACK_REDIRECT_URI_PATH
+    //   SLACK_OAUTH_COMPLETION_URL, SLACK_OAUTH_CANCELLATION_URL
     // Env variables
     static final String SLACK_BOT_TOKEN = System.getenv("SLACK_BOT_TOKEN");
     static final String SLACK_SIGNING_SECRET = System.getenv("SLACK_SIGNING_SECRET");
@@ -323,7 +325,7 @@ public class Controller implements Subject {
         AppConfig authConfig = new AppConfig();
         authConfig.setAppPath("/slack/oauth");
         authConfig.setOAuthRedirectUriPathEnabled(true);
-        authConfig.setOauthRedirectUriPath("/install");
+        authConfig.setOauthRedirectUriPath("/start");
         authConfig.setSigningSecret(SLACK_SIGNING_SECRET);
         authConfig.setClientId(SLACK_CLIENT_ID);
         authConfig.setRedirectUri(SLACK_REDIRECT_URI);
@@ -336,7 +338,7 @@ public class Controller implements Subject {
 
         final App oauthApp = new App(authConfig).asOAuthApp(true);
 
-        oauthApp.endpoint("/install", (req, ctx) -> {
+        oauthApp.endpoint("/start", (req, ctx) -> {
             // https://www.baeldung.com/java-curl
             // https://stackoverflow.com/a/19177892/10783453
             System.out.println("NOT GOING INTO HERE!");
