@@ -94,41 +94,26 @@ public class Scheduler implements Job, Observer {
         org.quartz.Scheduler sched = schedFact.getScheduler();
         sched.start();
 
-        // ******************* THIS IS FOR DEMO PURPOSES, AUTOMATIC SEND-OUT ********************
-        // define the job and tie it to our myJob class
-        JobDetail job = newJob(Scheduler.class)
-                .withIdentity("myJob", "group1")
-                .build();
-
-        // Trigger the job to run now
-        Trigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity("myTrigger", "group1")
-                .startNow()
-                .build();
-
-        // pass job the users as a param
-        job.getJobDataMap().put(Scheduler.DATA_ARRAY_KEY, users);
-
-        // Tell quartz to schedule the job using our trigger
-        sched.scheduleJob(job, trigger);
-
         // ******************* THIS IS TO SEND OUT AT SPECIFIED TIME/TIMEZONE/DAY ********************
         // Trigger job to run when specified
-//        for (String day : selectedDays) {
-//            // define the job and tie it to our HelloJob class
-//            JobDetail job = newJob(Scheduler.class)
-//                    .withIdentity("myJob", "group" + day)
-//                    .build();
+        for (String day : selectedDays) {
+            // define the job and tie it to our HelloJob class
+            JobDetail job = newJob(Scheduler.class)
+                    .withIdentity("myJob", "group" + day)
+                    .build();
 
-//            // Trigger the job to run at specified selected time at selected day for selected time zone
-//            Trigger trigger = TriggerBuilder.newTrigger()
-//                    .withIdentity("myTrigger", "group" + day)
-//                    .withSchedule(CronScheduleBuilder.cronSchedule(selectedTime + day)
-//                    .inTimeZone(TimeZone.getTimeZone(selectedTimeZone)))
-//                    .build();
-//
-//            // Tell quartz to schedule the job using our trigger
-//            sched.scheduleJob(job, trigger);
-//         }
+            // Trigger the job to run at specified selected time at selected day for selected time zone
+            Trigger trigger = TriggerBuilder.newTrigger()
+                    .withIdentity("myTrigger", "group" + day)
+                    .withSchedule(CronScheduleBuilder.cronSchedule(selectedTime + day)
+                    .inTimeZone(TimeZone.getTimeZone(selectedTimeZone)))
+                    .build();
+
+            // pass job the users as a param
+            job.getJobDataMap().put(Scheduler.DATA_ARRAY_KEY, users);
+
+            // Tell quartz to schedule the job using our trigger
+            sched.scheduleJob(job, trigger);
+         }
     }
 }
