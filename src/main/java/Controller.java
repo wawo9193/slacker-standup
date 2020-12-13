@@ -406,7 +406,93 @@ public class Controller implements Subject {
         logger.info("RUNNING NOW ON : " + PORT);
         Map<String, App> apps = new HashMap<>();
         apps.put("/slack/events", apiApp);
+        apps.put("/slack/oauth",       AppConfig authConfig = new AppConfig();
+        authConfig.setAppPath("/slack/oauth");
+        authConfig.setOAuthRedirectUriPathEnabled(true);
+        authConfig.setOauthRedirectUriPath("/start");
+        authConfig.setSigningSecret(SLACK_SIGNING_SECRET);
+        authConfig.setClientId(SLACK_CLIENT_ID);
+        authConfig.setRedirectUri(SLACK_REDIRECT_URI);
+        authConfig.setScope(SLACK_SCOPES);
+        authConfig.setUserScope(SLACK_USER_SCOPES);
+        authConfig.setOauthInstallPath(SLACK_INSTALL_PATH);
+        authConfig.setOauthRedirectUriPath(SLACK_REDIRECT_URI_PATH);
+        authConfig.setOauthCompletionUrl(SLACK_OAUTH_COMPLETION_URL);
+        authConfig.setOauthCancellationUrl(SLACK_OAUTH_CANCELLATION_URL);
+
+        final App oauthApp = new App(authConfig).asOAuthApp(true);
+
+        oauthApp.endpoint("/start", (req, ctx) -> {
+            // https://www.baeldung.com/java-curl
+            // https://stackoverflow.com/a/19177892/10783453
+            System.out.println("NOT GOING INTO HERE!");
+            try {
+                HashMap<String,String> queryMap = new HashMap<>(parseQueryString(req.getQueryString()));
+                String code = queryMap.get("code");
+                String command = "curl -F code=" + code + " -F client_id=1342824380833.1470182319287 -F client_secret=" + SLACK_CLIENT_SECRET + " https://slack.com/api/oauth.v2.access";
+
+                Process process = Runtime.getRuntime().exec(command);
+                InputStream is = process.getInputStream();
+                StringBuilder sb = new StringBuilder();
+                int c;
+
+                while((c = is.read()) != -1) {
+                    sb.append((char)c);
+                }
+                String jsonStr = sb.toString();
+
+                // parse json string response to get team id and access token
+                Gson g = new Gson();
+                Res res = g.fromJson(jsonStr, Res.class);
+                String teamId = res.team.getId();
+                String botToken = res.access_token;
+
+                // store team id and access token as k,v pair in redis
+                jedis.set(teamId, botToken);
+
+                process.destroy();
+
+            } catch (IOException | JedisConnectionException e) {
+                logger.error("error {}", e);
+            }
+
+            return Response.builder()
+                    .statusCode(200)
+                    .contentType("text/html")
+                    .body(renderCompletionPageHtml(req.getQueryString()))
+                    .build();
+        });
+
+//        oauthApp.endpoint("/favicon.ico", (req, ctx) -> {
+//           return Response.builder()
+//                   .statusCode(200)
+//                   .contentType("text/html")
+//                   .body(renderCompletionPageHtml(req.getQueryString()))
+//                   .build();
+//        });
+//
+//        oauthApp.endpoint("GET", "/slack/oauth/completion", (req, ctx) -> {
+//            return Response.builder()
+//                    .statusCode(200)
+//                    .contentType("text/html")
+//                    .body(renderCompletionPageHtml(req.getQueryString()))
+//                    .build();
+//        });
+//
+//        oauthApp.endpoint("GET", "/slack/oauth/cancellation", (req, ctx) -> {
+//            return Response.builder()
+//                    .statusCode(200)
+//                    .contentType("text/html")
+//                    .body(renderCancellationPageHtml(req.getQueryString()))
+//                    .build();
+//        });
+
+        logger.info("RUNNING NOW ON : " + PORT);
+        Map<String, App> apps = new HashMap<>();
+        apps.put("/slack/events", apiApp);
         apps.put("/slack/oauth", oauthApp);
+        SlackAppServer server = new SlackAppServer(apps, PORT);
+        server.start(); oauthApp);
         SlackAppServer server = new SlackAppServer(apps, PORT);
         server.start();
     }
