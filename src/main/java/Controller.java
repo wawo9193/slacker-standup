@@ -100,6 +100,7 @@ public class Controller implements Subject {
         return jedis;
     }
 
+    // Observer is the scheduler
     public void notifyObservers(ArrayList<String> days, ArrayList<String> users, String times, String timeZone){
         scheduler.update(days, users, times, timeZone);
     }
@@ -122,12 +123,21 @@ public class Controller implements Subject {
     static String renderCancellationPageHtml(String queryString) { return null; }
 
     public static void main(String[] args) throws Exception {
-        Jedis jedis = getConnection();
+        /* The main instantiates the app variable which has the ability
+         * to start a servlet server. In-between the app and server
+         * instantiation are all the controller route handlers.
+         */
+
+        // Configuring/instantiating the slack api app object
         AppConfig apiConfig = new AppConfig();
         apiConfig.setAppPath("/slack/events");
         apiConfig.setSigningSecret(SLACK_SIGNING_SECRET);
-        final App apiApp = new App(apiConfig);
+        App apiApp = new App(apiConfig);
+        Jedis jedis = getConnection();
 
+        /**************** ROUTE HANDLERS ****************/
+
+        /***** SLASH COMMAND HANDLERS *****/
         apiApp.command("/schedule", (req, ctx) -> {
             String channelId = req.getPayload().getChannelId();
             String teamId = req.getPayload().getTeamId();
@@ -135,7 +145,6 @@ public class Controller implements Subject {
 
             Runnable r = () -> {
                 try {
-                    // Call the chat.postMessage method using the built-in WebClient
                     var result = client.chatPostMessage(r1 -> r1
                             // The token you used to initialize your app
                             .token(jedis.get(teamId))
@@ -146,17 +155,17 @@ public class Controller implements Subject {
                                     actions(actions -> actions
                                             .elements(asElements(
                                                     button(b -> b.actionId("schedule-modal").text(plainText(pt -> pt.text("Schedule Standups"))))
-                                                   // button(b -> b.actionId("schedule-modal-skip").text(plainText(pt -> pt.text("Skip Standups"))))
                                             ))
                                     )))
                     );
-                    // Print result, which includes information about the message (like TS)
                     logger.info("result {}", result);
                 } catch (IOException | SlackApiException e) {
                     logger.error("error: {}", e.getMessage(), e);
                 }
             };
 
+            // to overcome the 3 second operation timeout message, multiple threads
+            // are deployed to return 200 response and submit message to channel
             ExecutorService executor = Executors.newCachedThreadPool();
             executor.submit(r);
             executor.shutdown();
@@ -185,7 +194,6 @@ public class Controller implements Subject {
 
             var client = Slack.getInstance().methods();
             try {
-                // Call the chat.postMessage method using the built-in WebClient
                 var result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
                         .token(jedis.get(teamId))
@@ -201,18 +209,26 @@ public class Controller implements Subject {
             return ctx.ack();
         });
 
+        /***** VIEW SUBMISSION HANDLERS *****/
         apiApp.viewSubmission("schedule-standups", (req, ctx) -> {
-            String teamId = req.getPayload().getTeam().getId();
-            var client = Slack.getInstance().methods();
-            Map<String, Map<String, ViewState.Value>> stateValues = req.getPayload().getView().getState().getValues();
-            List<ViewState.SelectedOption> days = stateValues.get("days-block").get("select-days").getSelectedOptions();
-            ArrayList<String> users = (ArrayList<String>) stateValues.get("user-block").get("select-user").getSelectedUsers();
-            String slackChannelId = stateValues.get("channel-block").get("select-channel").getSelectedChannel();
-            String time = stateValues.get("time-block").get("select-time").getSelectedOption().getValue();
-            String timeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getValue();
+            /*
+            * Functionality: when the stand-up scheduler view is submitted, the callback id, block id's, and action id's
+            * can be used to parse the request body so that all variables can be obtained and used to notify the scheduler.
+            */
 
+            // Parse request body payload into values
+            Map<String, Map<String, ViewState.Value>> stateValues = req.getPayload().getView().getState().getValues(); // all values are in this portion of payload
+            List<ViewState.SelectedOption> days = stateValues.get("days-block").get("select-days").getSelectedOptions();
+            String teamId = req.getPayload().getTeam().getId();
+            ArrayList<String> users = (ArrayList<String>) stateValues.get("user-block").get("select-user").getSelectedUsers();
+            String cronTime = stateValues.get("time-block").get("select-time").getSelectedOption().getValue();
+            String time = stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText();
+            String timeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText();
+            String quartzTimeZone = stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getValue();
+            String userId = req.getPayload().getUser().getId();
             ArrayList<String> selectedD = new ArrayList<>();
             ArrayList<String> selectedDays = new ArrayList<>();
+            SLACK_CHANNEL_ID = stateValues.get("channel-block").get("select-channel").getSelectedChannel(); // shared class value, selected channel for bot output
 
             for (ViewState.SelectedOption element : days) {
                 selectedDays.add(element.getValue());
@@ -220,19 +236,18 @@ public class Controller implements Subject {
             }
 
             try {
-                SLACK_CHANNEL_ID = slackChannelId;
-                controller.notifyObservers(selectedDays, users, time, timeZone);
+                controller.notifyObservers(selectedDays, users, cronTime, quartzTimeZone);
                 scheduler.schedule();
 
+                MethodsClient client = Slack.getInstance().methods();
                 var result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
                         .token(jedis.get(teamId))
                         .channel(SLACK_CHANNEL_ID)
                         .blocks(asBlocks(
-                                section(section -> section.text(markdownText("You scheduled your standup for " + selectedD.toString() + " at " + stateValues.get("time-block").get("select-time").getSelectedOption().getText().getText() + stateValues.get("timezone-block").get("select-timezone").getSelectedOption().getText().getText())))
+                                section(section -> section.text(markdownText("You scheduled your standup for " + selectedD.toString() + " at " + time + " " + timeZone)))
                         ))
                 );
-
                 logger.info("result: {}", result);
             } catch (SchedulerException e) {
                 logger.error("error: {}",e);
@@ -240,25 +255,63 @@ public class Controller implements Subject {
             return ctx.ack();
         });
 
+
+        apiApp.viewSubmission("submission-standups", (req, ctx) -> {
+            /*
+            * Functionality: when the stand-up view is submitted by the user, the inputs are block formatted
+            * and sent to the designated <SLACK_CHANNEL_ID>
+            */
+            var channelId = req.getPayload().getUser().getId();
+            String teamId = req.getPayload().getTeam().getId();
+            String username = req.getPayload().getUser().getUsername();
+            try {
+                MethodsClient client = Slack.getInstance().methods();
+                Map<String, Map<String, ViewState.Value>> stateValues = req.getPayload().getView().getState().getValues();
+                String inp1 = stateValues.get("prev-tasks").get("agenda-1").getValue();
+                String inp2 = stateValues.get("to-do").get("agenda-2").getValue();
+                String inp3 = stateValues.get("blockers").get("agenda-3").getValue();
+
+                ChatPostMessageResponse response = client.chatPostMessage(r -> r
+                        .token(SLACK_BOT_TOKEN)
+                        .channel(SLACK_CHANNEL_ID)
+                        .text("A Standup was Submitted!")
+                        .blocks(asBlocks(
+                                section(section -> section.text(markdownText("*@" + username + " submitted a standup! :rocket:*"))),
+                                divider(),
+                                section(section -> section.text(markdownText("*What have you been working on?*\n"))),
+                                section(section -> section.text(markdownText(inp1 + "\n"))),
+                                divider(),
+                                section(section -> section.text(markdownText("*What will you be working on?*\n"))),
+                                section(section -> section.text(markdownText(inp2 + "\n"))),
+                                divider(),
+                                section(section -> section.text(markdownText("*Do you have any blockers?*\n"))),
+                                section(section -> section.text(markdownText(inp3 + "\n")))
+                        ))
+                );
+                logger.info("response: {}", response);
+            } catch (IOException | SlackApiException e) {
+                logger.error("error: {}", e.getMessage(), e);
+            }
+            return ctx.ack();
+        });
+
+        /***** VIEW CLOSURE HANDLERS *****/
         apiApp.viewClosed("submission-standups", (req, ctx) -> {
             var client = Slack.getInstance().methods();
             var channelId = req.getPayload().getUser().getId();
             String teamId = req.getPayload().getTeam().getId();
 
             try {
-                // Call the chat.postMessage method using the built-in WebClient
                 var result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
                         .token(jedis.get(teamId))
                         .channel(channelId)
                         .text("You cancelled your standup :unamused:")
                 );
-                // Print result, which includes information about the message (like TS)
                 logger.info("result {}", result);
             } catch (IOException | SlackApiException e) {
                 logger.error("error: {}", e.getMessage(), e);
             }
-
             return ctx.ack();
         });
 
@@ -268,19 +321,16 @@ public class Controller implements Subject {
             String teamId = req.getPayload().getTeam().getId();
 
             try {
-                // Call the chat.postMessage method using the built-in WebClient
                 ChatPostMessageResponse result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
                         .token(jedis.get(teamId))
                         .channel(channelId)
                         .text("You cancelled scheduling for your standup.:confused:")
                 );
-                // Print result, which includes information about the message (like TS)
                 logger.info("result {}", result);
             } catch (IOException | SlackApiException e) {
                 logger.error("error: {}", e.getMessage(), e);
             }
-
             return ctx.ack();
         });
 
@@ -406,93 +456,7 @@ public class Controller implements Subject {
         logger.info("RUNNING NOW ON : " + PORT);
         Map<String, App> apps = new HashMap<>();
         apps.put("/slack/events", apiApp);
-        apps.put("/slack/oauth",       AppConfig authConfig = new AppConfig();
-        authConfig.setAppPath("/slack/oauth");
-        authConfig.setOAuthRedirectUriPathEnabled(true);
-        authConfig.setOauthRedirectUriPath("/start");
-        authConfig.setSigningSecret(SLACK_SIGNING_SECRET);
-        authConfig.setClientId(SLACK_CLIENT_ID);
-        authConfig.setRedirectUri(SLACK_REDIRECT_URI);
-        authConfig.setScope(SLACK_SCOPES);
-        authConfig.setUserScope(SLACK_USER_SCOPES);
-        authConfig.setOauthInstallPath(SLACK_INSTALL_PATH);
-        authConfig.setOauthRedirectUriPath(SLACK_REDIRECT_URI_PATH);
-        authConfig.setOauthCompletionUrl(SLACK_OAUTH_COMPLETION_URL);
-        authConfig.setOauthCancellationUrl(SLACK_OAUTH_CANCELLATION_URL);
-
-        final App oauthApp = new App(authConfig).asOAuthApp(true);
-
-        oauthApp.endpoint("/start", (req, ctx) -> {
-            // https://www.baeldung.com/java-curl
-            // https://stackoverflow.com/a/19177892/10783453
-            System.out.println("NOT GOING INTO HERE!");
-            try {
-                HashMap<String,String> queryMap = new HashMap<>(parseQueryString(req.getQueryString()));
-                String code = queryMap.get("code");
-                String command = "curl -F code=" + code + " -F client_id=1342824380833.1470182319287 -F client_secret=" + SLACK_CLIENT_SECRET + " https://slack.com/api/oauth.v2.access";
-
-                Process process = Runtime.getRuntime().exec(command);
-                InputStream is = process.getInputStream();
-                StringBuilder sb = new StringBuilder();
-                int c;
-
-                while((c = is.read()) != -1) {
-                    sb.append((char)c);
-                }
-                String jsonStr = sb.toString();
-
-                // parse json string response to get team id and access token
-                Gson g = new Gson();
-                Res res = g.fromJson(jsonStr, Res.class);
-                String teamId = res.team.getId();
-                String botToken = res.access_token;
-
-                // store team id and access token as k,v pair in redis
-                jedis.set(teamId, botToken);
-
-                process.destroy();
-
-            } catch (IOException | JedisConnectionException e) {
-                logger.error("error {}", e);
-            }
-
-            return Response.builder()
-                    .statusCode(200)
-                    .contentType("text/html")
-                    .body(renderCompletionPageHtml(req.getQueryString()))
-                    .build();
-        });
-
-//        oauthApp.endpoint("/favicon.ico", (req, ctx) -> {
-//           return Response.builder()
-//                   .statusCode(200)
-//                   .contentType("text/html")
-//                   .body(renderCompletionPageHtml(req.getQueryString()))
-//                   .build();
-//        });
-//
-//        oauthApp.endpoint("GET", "/slack/oauth/completion", (req, ctx) -> {
-//            return Response.builder()
-//                    .statusCode(200)
-//                    .contentType("text/html")
-//                    .body(renderCompletionPageHtml(req.getQueryString()))
-//                    .build();
-//        });
-//
-//        oauthApp.endpoint("GET", "/slack/oauth/cancellation", (req, ctx) -> {
-//            return Response.builder()
-//                    .statusCode(200)
-//                    .contentType("text/html")
-//                    .body(renderCancellationPageHtml(req.getQueryString()))
-//                    .build();
-//        });
-
-        logger.info("RUNNING NOW ON : " + PORT);
-        Map<String, App> apps = new HashMap<>();
-        apps.put("/slack/events", apiApp);
         apps.put("/slack/oauth", oauthApp);
-        SlackAppServer server = new SlackAppServer(apps, PORT);
-        server.start(); oauthApp);
         SlackAppServer server = new SlackAppServer(apps, PORT);
         server.start();
     }
