@@ -4,3 +4,5 @@ Views.class
 Res.class
 Subject.class
 Controller.class
+HeaderFilter$FilteredRequest.class
+HeaderFilter.class
