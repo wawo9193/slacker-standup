@@ -38,8 +38,8 @@ import static com.slack.api.model.block.Blocks.*;
 import static com.slack.api.model.block.composition.BlockCompositions.*;
 import static com.slack.api.model.block.element.BlockElements.*;
 
-//import redis.clients.jedis.Jedis;
-//import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 
 class Res {
     boolean ok;
@@ -75,11 +75,11 @@ public class Controller implements Subject {
     static final String REDIS_URL = System.getenv("REDIS_URL");
     static final Integer PORT = Integer.valueOf(System.getenv("PORT"));
 
-//    private static Jedis getConnection() throws URISyntaxException {
-//        URI redisURI = new URI(REDIS_URL);
-//        Jedis jedis = new Jedis(redisURI, 0);
-//        return jedis;
-//    }
+    private static Jedis getConnection() throws URISyntaxException {
+        URI redisURI = new URI(REDIS_URL);
+        Jedis jedis = new Jedis(redisURI, 0);
+        return jedis;
+    }
 
     // Observer is the scheduler
     public void notifyObservers(ArrayList<String> days, ArrayList<String> users, String times, String timeZone){
@@ -100,17 +100,17 @@ public class Controller implements Subject {
         return hm;
     }
 
-//    static String authorize(String teamId, String enterpriseId, Jedis jedis) {
-//        teamId = "id" + teamId; // prepend to avoid a key hash type error in Jedis
-//
-//        if (jedis.exists(teamId)) {
-//            return jedis.hget(teamId, "bot_access_token");
-//        } else if (jedis.exists(enterpriseId)) {
-//            return jedis.hget(enterpriseId, "bot_access_token");
-//        }
-//
-//        throw new RuntimeException(); // no such team/enterprise saved
-//    }
+    static String authorize(String teamId, String enterpriseId, Jedis jedis) {
+        teamId = "id" + teamId; // prepend to avoid a key hash type error in Jedis
+
+        if (jedis.exists(teamId)) {
+            return jedis.hget(teamId, "bot_access_token");
+        } else if (jedis.exists(enterpriseId)) {
+            return jedis.hget(enterpriseId, "bot_access_token");
+        }
+
+        throw new RuntimeException(); // no such team/enterprise saved
+    }
 
     private static void save(AmazonS3 s3, String s3Key, String json, String bucketName) {
         PutObjectResult botPutResult = s3.putObject(bucketName, s3Key, json);
@@ -133,7 +133,7 @@ public class Controller implements Subject {
         // Configuring/instantiating the slack api app object
         App apiApp = new App();
         apiApp.service(installationService);
-//        Jedis jedis = getConnection();
+        Jedis jedis = getConnection();
 
         /**************** ROUTE HANDLERS ****************/
 
@@ -151,8 +151,7 @@ public class Controller implements Subject {
                 try {
                     var result = client.chatPostMessage(r -> r
                             // The token you used to initialize your app
-//                            .token(authorize(req.getPayload().getTeamId(), req.getPayload().getEnterpriseId(), jedis))
-                            .token("xoxb-1559426920439-1590930692161-yMveE175SpX2ibF8yPWM3aSW")
+                            .token(authorize(req.getPayload().getTeamId(), req.getPayload().getEnterpriseId(), jedis))
                             .channel(channelId)
                             .text("Schedule your standup!")
                             .blocks(asBlocks(
@@ -202,8 +201,7 @@ public class Controller implements Subject {
             try {
                 var result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
-//                        .token(authorize(teamId, "", jedis))
-                        .token("xoxb-1559426920439-1590930692161-yMveE175SpX2ibF8yPWM3aSW")
+                        .token(authorize(teamId, "", jedis))
                         .channel(req.getPayload().getUser().getId())
                         .text("You skipped your standup today :pensive:, see you next time!:smile:")
                 );
@@ -249,8 +247,7 @@ public class Controller implements Subject {
                 MethodsClient client = Slack.getInstance().methods();
                 var result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
-//                        .token(authorize(teamId, "", jedis))
-                        .token("xoxb-1559426920439-1590930692161-yMveE175SpX2ibF8yPWM3aSW")
+                        .token(authorize(teamId, "", jedis))
                         .channel(channelId)
                         .blocks(asBlocks(
                                 section(section -> section.text(markdownText("You scheduled your standup for " + selectedD.toString() + " at " + time + " " + timeZone)))
@@ -280,8 +277,7 @@ public class Controller implements Subject {
                 String inp3 = stateValues.get("blockers").get("agenda-3").getValue();
 
                 ChatPostMessageResponse response = client.chatPostMessage(r -> r
-//                        .token(authorize(teamId, "", jedis))
-                        .token("xoxb-1559426920439-1590930692161-yMveE175SpX2ibF8yPWM3aSW")
+                        .token(authorize(teamId, "", jedis))
                         .channel(SLACK_CHANNEL_ID)
                         .text("A Standup was Submitted!")
                         .blocks(asBlocks(
@@ -318,8 +314,7 @@ public class Controller implements Subject {
 
                 ChatPostMessageResponse response = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
-//                        .token(authorize(teamId, "", jedis))
-                        .token("xoxb-1559426920439-1590930692161-yMveE175SpX2ibF8yPWM3aSW")
+                        .token(authorize(teamId, "", jedis))
                         .channel(channelId)
                         .text("A Standup was Submitted!")
                         .blocks(asBlocks(
@@ -353,8 +348,7 @@ public class Controller implements Subject {
                 MethodsClient client = Slack.getInstance().methods();
                 var result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
-//                        .token(authorize(teamId, "", jedis))
-                        .token("xoxb-1559426920439-1590930692161-yMveE175SpX2ibF8yPWM3aSW")
+                        .token(authorize(teamId, "", jedis))
                         .channel(channelId)
                         .text("You cancelled your standup :unamused:")
                 );
@@ -373,8 +367,7 @@ public class Controller implements Subject {
             try {
                 ChatPostMessageResponse result = client.chatPostMessage(r -> r
                         // The token you used to initialize your app
-//                        .token(authorize(teamId, "", jedis))
-                        .token("xoxb-1559426920439-1590930692161-yMveE175SpX2ibF8yPWM3aSW")
+                        .token(authorize(teamId, "", jedis))
                         .channel(channelId)
                         .text("You cancelled scheduling for your standup.:confused:")
                 );
@@ -454,8 +447,8 @@ public class Controller implements Subject {
                         .put("installedAt", 0)
                         .toString();
 
-//                jedis.hset("id" + res.team.getId(), "bot_access_token", res.access_token);
-//                jedis.hset("id" + res.team.getId(), "bot_user_id", res.bot_user_id);
+                jedis.hset("id" + res.team.getId(), "bot_access_token", res.access_token);
+                jedis.hset("id" + res.team.getId(), "bot_user_id", res.bot_user_id);
                 System.out.println("TOKENNNNN: " + res.access_token);
                 // save oauth info into S3
                 AmazonS3 s3 = AmazonS3ClientBuilder.defaultClient();
@@ -468,8 +461,7 @@ public class Controller implements Subject {
                 try {
                     var result = client.chatPostMessage(r -> r
                                     // The token you used to initialize your app
-//                                    .token(authorize(res.team.getId(), "", jedis))
-                                    .token("xoxb-1559426920439-1590930692161-yMveE175SpX2ibF8yPWM3aSW")
+                                    .token(authorize(res.team.getId(), "", jedis))
                                     .channel(res.authed_user.getId())
                                     .text("Hello :wave: this is the beginning of your slacker stand-up chat. Use the slash command, \"/schedule\" to schedule your stand-up!")
                     );
