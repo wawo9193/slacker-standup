@@ -138,14 +138,18 @@ public class Controller implements Subject {
         /**************** ROUTE HANDLERS ****************/
 
         /***** SLASH COMMAND HANDLERS *****/
-        apiApp.command("/slack/events/schedule", (req, ctx) -> {
+        apiApp.endpoint("POST","/slack/events/schedule", (req, ctx) -> {
+            logger.info("SUCCESS ***************************");
+            return ctx.ack();
+        });
+        apiApp.command("/schedule", (req, ctx) -> {
             String channelId = req.getPayload().getChannelId();
             String teamId = req.getPayload().getTeamId();
             MethodsClient client = Slack.getInstance().methods();
 
-            Runnable r = () -> {
+            Runnable runnable = () -> {
                 try {
-                    var result = client.chatPostMessage(r1 -> r1
+                    var result = client.chatPostMessage(r -> r
                             // The token you used to initialize your app
                             .token(authorize(req.getPayload().getTeamId(), req.getPayload().getEnterpriseId(), jedis))
                             .channel(channelId)
@@ -167,7 +171,7 @@ public class Controller implements Subject {
             // to overcome the 3 second operation timeout message, multiple threads
             // are deployed to return 200 response and submit message to channel
             ExecutorService executor = Executors.newCachedThreadPool();
-            executor.submit(r);
+            executor.submit(runnable);
             executor.shutdown();
 
             return ctx.ack(); // respond with 200 OK
@@ -378,7 +382,8 @@ public class Controller implements Subject {
         final App oauthApp = new App().asOAuthApp(true);
         oauthApp.service(installationService);
 
-        oauthApp.endpoint("/slack/oauth/start", (req, ctx) -> {
+        /***** OAUTH2 HANDLERS *****/
+        oauthApp.endpoint("/slack/oauth/callback", (req, ctx) -> {
             /*
              * Functionality: when a new workspace clicks the 'Allow' button on granular scope permissions,
              * this is the redirect uri endpoint that is hit. Once it goes in here it sends a curl command to
@@ -489,8 +494,7 @@ public class Controller implements Subject {
         });
 
         // Store valid state parameter values in Amazon S3 storage
-        OAuthStateService stateService = new AmazonS3OAuthStateService(awsS3BucketName);
-        oauthApp.service(stateService);
+        oauthApp.service(new AmazonS3OAuthStateService(awsS3BucketName));
 
         logger.info("RUNNING NOW ON : " + PORT);
         Map<String, App> apps = new HashMap<>();
